@@ -1,6 +1,8 @@
 # NestedMapper
+
 NestedMapper aims at automating the task of mapping structurally different objects representing the same information.
 
+## Typical use case
 Let's say for example you have a type defined as such :
 
 ```
@@ -18,7 +20,9 @@ If you try using Dapper to get Foo objects, it won't magically work, and you'll 
 
 NestedMapper is a small library that automatically creates this mapping code. And since it compiles the mapping code, the performance is similar to the code you would have written manually.
 
-Here is a sample call to the library :
+## Sample call
+
+Here is a sample call to the library to map to the above object:
 
 ```
         dynamic flatfoo = new ExpandoObject();
@@ -26,6 +30,13 @@ Here is a sample call to the library :
         flatfoo.x = 45;
         flatfoo.y = 200;
 
-        var foo = MapperFactory.GetMapper<FooPosition>(MapperFactory.PropertyNameEnforcement.InNestedTypesOnly, flatfoo).Map(flatfoo);
+        var mapper = MapperFactory.GetMapper<FooPosition>(MapperFactory.PropertyNameEnforcement.InNestedTypesOnly, flatfoo);
+        var foo = mapper.Map(flatfoo);
 
 ```
+
+## Mapper configuration
+
+The mapper will flatten the target object, and then check that source and target objects have the same number of properties, and that their types perfectly match.
+the PropertyNameEnforcement enum controls whether mismatching names are allowed.
+Always and Never are self explanatory, and InNestedTypesOnly will only enforce perfectly matching names for properties defined at the top of the target object
