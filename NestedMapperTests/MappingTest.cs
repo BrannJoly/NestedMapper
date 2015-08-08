@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Dynamic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NestedMapper;
@@ -34,6 +35,7 @@ namespace NestedMapperTests
             public string B { get; set; }
         }
 
+     
 
         [TestMethod]
         public void TestSimpleMappingScenario()
@@ -140,6 +142,30 @@ namespace NestedMapperTests
             };
 
             Check.ThatCode(() => MapperFactory.GetMapper<Foo>(MapperFactory.PropertyNameEnforcement.Always, flatfoo).Map(flatfoo)).Throws<InvalidOperationException>();
+
+        }
+
+        public class FooPosition
+        {
+            public string Name { get; set; }
+
+            public Point Position { get; set; }
+        }
+
+
+        [TestMethod]
+        public void TestSimpleMappingScenarioBaseType()
+        {
+            dynamic flatfoo = new ExpandoObject();
+            flatfoo.Name = "Foo";
+            flatfoo.x = 45;
+            flatfoo.y = 200;
+
+            var foo = MapperFactory.GetMapper<FooPosition>(MapperFactory.PropertyNameEnforcement.InNestedTypesOnly, flatfoo).Map(flatfoo);
+
+            Check.That(foo.Name).Equals("Foo");
+            Check.That(foo.Position.X).Equals(DateTime.Today);
+            Check.That(foo.Position.Y).Equals("B");
 
         }
 

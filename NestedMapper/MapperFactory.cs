@@ -71,17 +71,15 @@ namespace NestedMapper
                 mappingActions.Add(exp.Compile());
             }
 
-            if (x.MoveNext())
-            {
-                throw new InvalidOperationException("Not enough fields in the flat object");
-            }
+            seekedProperty.Type = null;
+            x.MoveNext(); // will throw if we still have remaining fields now that seekedProperty.Type is null 
             return new Mapper<T>(mappingActions);
         }
 
 
         static IEnumerable<List<string>> TraverseObject(Type t, Stack<string> path, PropertyBasicInfo propertyBasicInfo, PropertyNameEnforcement propertyNameEnforcement, bool topLevel )
         {
-            var props = t.GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance);
+            var props = t.GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance );
 
             if (props.Length == 0)
             {
@@ -90,6 +88,16 @@ namespace NestedMapper
 
             foreach (var prop in props)
             {
+                if (prop.GetSetMethod() == null)
+                {
+                    continue;
+                }
+
+                if (propertyBasicInfo.Type == null)
+                {
+                    throw new InvalidOperationException("Not enough fields in the flat object");
+                }
+
                 if (prop.PropertyType == propertyBasicInfo.Type)
                 {
                     if (prop.Name == propertyBasicInfo.Name
@@ -110,9 +118,8 @@ namespace NestedMapper
                 else
                 {
                     path.Push(prop.Name);
-                    foreach (
-                        var r in TraverseObject(prop.PropertyType, path, propertyBasicInfo, propertyNameEnforcement, false)
-                        )
+
+                    foreach (var r in TraverseObject(prop.PropertyType, path, propertyBasicInfo, propertyNameEnforcement, false))
                     {
                         yield return r;
                     }
