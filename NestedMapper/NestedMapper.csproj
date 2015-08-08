@@ -41,7 +41,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ExpressionTreeUtils.cs" />
-    <Compile Include="ObjectMapper.cs" />
+    <Compile Include="Mapper.cs" />
+    <Compile Include="MapperFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
