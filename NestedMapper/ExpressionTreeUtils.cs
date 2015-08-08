@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.CSharp.RuntimeBinder;
 
 namespace NestedMapper
@@ -14,21 +12,21 @@ namespace NestedMapper
         /// Generates an Expression that can assign a dynamic object property into a nested property
         /// </summary>
         /// <param name="targetPath">a path to a nested property </param>
-        /// <param name="sourceProperty">the source property </param>
+        /// <param name="sourcePropertyName">the source property </param>
         /// <returns>the compiled set expression</returns>
-        public static Expression<Action<T, dynamic>> CreateNestedSetFromDynamicProperty<T>(List<string> targetPath, string sourceProperty)
+        public static Expression<Action<T, dynamic>> CreateNestedSetFromDynamicProperty<T>(List<string> targetPath, string sourcePropertyName)
         {
             // target
             var targetParameterExpression = Expression.Parameter(typeof(T), "target");
 
             // target.nested.targetPath
-            var propertyExpression = targetPath.Aggregate<string, Expression>(targetParameterExpression, (c, m) => Expression.Property(c, m));
+            var propertyExpression = targetPath.Aggregate<string, Expression>(targetParameterExpression, Expression.Property);
 
             // source
             var sourceParameterExpression = Expression.Parameter(typeof(object), "source");
 
-            var binder = Microsoft.CSharp.RuntimeBinder.Binder.GetMember(CSharpBinderFlags.None, sourceProperty, typeof(ExpressionTreeUtils),
-             new CSharpArgumentInfo[] { CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null) });
+            var binder = Binder.GetMember(CSharpBinderFlags.None, sourcePropertyName, typeof(ExpressionTreeUtils),
+             new[] { CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null) });
 
             // source.sourceProperty
             var sourcePropertyExpression = Expression.Dynamic(binder, typeof(object), sourceParameterExpression);
