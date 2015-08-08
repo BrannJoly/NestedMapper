@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Dynamic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NestedMapper;
 using NFluent;
@@ -44,7 +45,7 @@ namespace NestedMapperTests
                 B = "B"
             };
 
-            var foo = new ObjectMapper<Foo>().Map(flatfoo);
+            var foo = MapperFactory.GetMapper<Foo>(MapperFactory.PropertyNameEnforcement.Always, flatfoo ). Map(flatfoo);
 
             Check.That(foo.I).Equals(1);
             Check.That(foo.N.A).Equals(DateTime.Today);
@@ -53,27 +54,24 @@ namespace NestedMapperTests
         }
 
 
-        public class FlatFooWrongName
-        {
-            public int WrongName { get; set; }
-            public DateTime A { get; set; }
-            public string B { get; set; }
-        }
-
-
         [TestMethod]
-        public void DontMapIfMembersNameDontMatch()
+        public void TestSimpleMappingScenarioWithExpandoObject()
         {
-            var flatfoo = new FlatFooWrongName()
-            {
-                WrongName = 1,
-                A = DateTime.Today,
-                B = "B"
-            };
+            dynamic flatfoo = new ExpandoObject();
+            flatfoo.I = 1;
+            flatfoo.A = DateTime.Today;
+            flatfoo.B = "N1B";
+         
 
-            Check.ThatCode(() => new ObjectMapper<Foo>().Map(flatfoo)).Throws<InvalidOperationException>();
+            var foo = MapperFactory.GetMapper<Foo>(MapperFactory.PropertyNameEnforcement.Always, flatfoo).Map(flatfoo);
+
+            Check.That(foo.I).Equals(1);
+            Check.That(foo.N.A).Equals(DateTime.Today);
+            Check.That(foo.N.B).Equals("B");
 
         }
+
+
 
 
         public class FlatFooTooManyFields
@@ -97,7 +95,7 @@ namespace NestedMapperTests
                 UnusedField =0
             };
 
-            Check.ThatCode(() => new ObjectMapper<Foo>().Map(flatfoo)).Throws<InvalidOperationException>();
+            Check.ThatCode(() => MapperFactory.GetMapper<Foo>(MapperFactory.PropertyNameEnforcement.Always, flatfoo).Map(flatfoo)).Throws<InvalidOperationException>();
 
         }
 
@@ -118,7 +116,7 @@ namespace NestedMapperTests
                 A = DateTime.Today,
             };
 
-            Check.ThatCode(() => new ObjectMapper<Foo>().Map(flatfoo)).Throws<InvalidOperationException>();
+            Check.ThatCode(() => MapperFactory.GetMapper<Foo>(MapperFactory.PropertyNameEnforcement.Always, flatfoo).Map(flatfoo)).Throws<InvalidOperationException>();
 
         }
 
@@ -141,9 +139,10 @@ namespace NestedMapperTests
                 B = "B"
             };
 
-            Check.ThatCode(() => new ObjectMapper<Foo>().Map(flatfoo)).Throws<InvalidOperationException>();
+            Check.ThatCode(() => MapperFactory.GetMapper<Foo>(MapperFactory.PropertyNameEnforcement.Always, flatfoo).Map(flatfoo)).Throws<InvalidOperationException>();
 
         }
+
 
 
     }
