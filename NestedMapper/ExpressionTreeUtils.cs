@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Net.WebSockets;
 using System.Reflection;
 using Microsoft.CSharp.RuntimeBinder;
 using Binder = Microsoft.CSharp.RuntimeBinder.Binder;
@@ -16,18 +17,39 @@ namespace NestedMapper
         /// <param name="targetPath">a path to a nested property </param>
         /// <param name="sourcePropertyName">the source property </param>
         /// <returns>the compiled set expression</returns>
-        public static Expression<Action<T, dynamic>> CreateNestedSetFromDynamicProperty<T>(List<string> targetPath,
+        public static Expression<Action<T, dynamic>> CreateNestedSetFromDynamicPropertyLambda<T>(List<string> targetPath,
             string sourcePropertyName)
         {
             // target
             var targetParameterExpression = Expression.Parameter(typeof (T), "target");
 
+            // source
+            var sourceParameterExpression = Expression.Parameter(typeof(object), "source");
+
+            var expressions = new List<Expression>();
+            expressions.Add(sourceParameterExpression);
+            expressions.Add(targetParameterExpression);
+            
+            var assignExpression = CreateNestedSetFromDynamicProperty<T>(targetPath, sourcePropertyName, targetParameterExpression, sourceParameterExpression);
+            expressions.Add(assignExpression);
+
+            var block = Expression.Block(expressions);
+
+            // (target, value) => target.nested.targetPath = (type) source.sourceProperty;
+            var assign = Expression.Lambda<Action<T, dynamic>>(block, targetParameterExpression,
+                sourceParameterExpression);
+
+            return assign;
+
+        }
+
+        public static BinaryExpression CreateNestedSetFromDynamicProperty<T>(List<string> targetPath, string sourcePropertyName,
+            ParameterExpression targetParameterExpression, ParameterExpression sourceParameterExpression)
+        {
             // target.nested.targetPath
             var propertyExpression = targetPath.Aggregate<string, Expression>(targetParameterExpression,
                 Expression.Property);
 
-            // source
-            var sourceParameterExpression = Expression.Parameter(typeof (object), "source");
 
             var binder = Binder.GetMember(CSharpBinderFlags.None, sourcePropertyName, typeof (ExpressionTreeUtils),
                 new[] {CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null)});
@@ -40,14 +62,9 @@ namespace NestedMapper
 
             //target.nested.targetPath = (type) source.sourceProperty;
             var assignExpression = Expression.Assign(propertyExpression, castedValueExpression);
-
-            // (target, value) => target.nested.targetPath = (type) source.sourceProperty;
-            var assign = Expression.Lambda<Action<T, dynamic>>(assignExpression, targetParameterExpression,
-                sourceParameterExpression);
-
-            return assign;
-
+            return assignExpression;
         }
+
 
         public static Expression<Action<T>> CreateNestedSetConstructor<T>(IEnumerable<string> targetPath)
         {

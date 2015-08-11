@@ -27,7 +27,7 @@ namespace NestedMapperTests
         public void CheckThatNestedAssignmentWorks()
         {
 
-            var f = ExpressionTreeUtils.CreateNestedSetFromDynamicProperty<Foo>(new List<string>(new[] {"myBar", "Test"}),"Input").Compile();
+            var f = ExpressionTreeUtils.CreateNestedSetFromDynamicPropertyLambda<Foo>(new List<string>(new[] {"myBar", "Test"}),"Input").Compile();
 
             var foo = new Foo { MyBar = new Bar() };
             dynamic myDynamic = new ExpandoObject();

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Dynamic;
 using System.Linq;
+using System.Linq.Expressions;
 
 namespace NestedMapper
 {
@@ -96,14 +97,43 @@ namespace NestedMapper
                 .Where(a=>a!=null) // if there's no default constructor, we'll ignore this action and hope the object is initialized properly by its parent. If it's not, we'll get a runtime error.
                 .ToList();
 
-            var mappingActions = mappings.Select(mapping => ExpressionTreeUtils.CreateNestedSetFromDynamicProperty<T>(mapping.TargetPath, mapping.SourceProperty)).ToList();
 
 
-
+            var mappingActions = getMappingAction<T>(mappings);
 
             return new Mapper<T>(mappingActions, constructorActions);
         }
 
+        private static List<Expression<Action<T, dynamic>>> getMappingAction<T>(List<Mapping> mappings) where T : new()
+        {
+            // target
+            var targetParameterExpression = Expression.Parameter(typeof(T), "target");
+
+            // source
+            var sourceParameterExpression = Expression.Parameter(typeof(object), "source");
+
+            var expressions = new List<Expression>();
+            expressions.Add(sourceParameterExpression);
+            expressions.Add(targetParameterExpression);
+
+
+            var mappingActions =
+             mappings.Select(
+                 mapping =>
+                     ExpressionTreeUtils.CreateNestedSetFromDynamicProperty<T>(mapping.TargetPath,
+                         mapping.SourceProperty, targetParameterExpression, sourceParameterExpression)).ToList();
+
+            expressions.AddRange(mappingActions);
+
+            var block = Expression.Block(expressions);
+
+            // (target, value) => target.nested.targetPath = (type) source.sourceProperty;
+            var assign = Expression.Lambda<Action<T, dynamic>>(block, targetParameterExpression,
+                sourceParameterExpression);
+
+            return new List<Expression<Action<T, dynamic>>> {assign};
+
+        }
 
 
         static IEnumerable<List<string>> TraverseObject(Type t, Stack<string> path, PropertyBasicInfo propertyBasicInfo, NamesMismatch namesMismatch, bool topLevel )
