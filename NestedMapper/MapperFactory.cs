@@ -93,9 +93,7 @@ namespace NestedMapper
 
             var constructorActions = GetConstructorActions<T>(mappings);
 
-            var mappingActions = GetMappingLambda<T>(mappings);
-
-            return new Mapper<T>(mappingActions, constructorActions);
+            return new Mapper<T>(GetMappingLambda<T>(mappings).Compile(), constructorActions);
         }
 
         private static List<Expression<Action<T>>> GetConstructorActions<T>(List<Mapping> mappings) where T : new()
@@ -111,7 +109,7 @@ namespace NestedMapper
             return constructorActions;
         }
 
-        private static List<Expression<Action<T, dynamic>>> GetMappingLambda<T>(List<Mapping> mappings) where T : new()
+        private static Expression<Action<T, dynamic>> GetMappingLambda<T>(List<Mapping> mappings) where T : new()
         {
             // target
             var targetParameterExpression = Expression.Parameter(typeof(T), "target");
@@ -133,7 +131,7 @@ namespace NestedMapper
             var assign = Expression.Lambda<Action<T, dynamic>>(block, targetParameterExpression,
                 sourceParameterExpression);
 
-            return new List<Expression<Action<T, dynamic>>> {assign};
+            return assign;
 
         }
 

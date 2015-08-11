@@ -16,9 +16,9 @@ namespace NestedMapper
     public class Mapper<T> : IMapper<T> where T : new()
     {
         private readonly List<Action<T>> _constructorActions = new List<Action<T>>();
-        private readonly List<Action<T, dynamic>> _mappingActions= new List<Action<T, dynamic>>();
+        private readonly Action<T, dynamic> _mappingAction;
 
-        public Mapper(List<Expression<Action<T, dynamic>>> mappingExpressions, List<Expression<Action<T>>> constructorExpressions)
+        public Mapper(Action<T, dynamic> mappingAction, List<Expression<Action<T>>> constructorExpressions)
         {
 
             foreach (var action in constructorExpressions)
@@ -26,10 +26,7 @@ namespace NestedMapper
                 _constructorActions.Add(action.Compile());
             }
 
-            foreach (var action in mappingExpressions)
-            {
-                _mappingActions.Add(action.Compile());
-            }
+            _mappingAction = mappingAction;
 
         }
 
@@ -42,10 +39,7 @@ namespace NestedMapper
                 action(r);
             }
 
-            foreach (var action in _mappingActions)
-            {
-                action(r, source);
-            }
+            _mappingAction(r, source);
 
             return r;
         }
