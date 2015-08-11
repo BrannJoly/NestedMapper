@@ -52,7 +52,7 @@ namespace NestedMapperTests
             flatfoo.A = DateTime.Today;
             flatfoo.B = "N1B";
 
-            const int iterations = 1000000;
+            const int iterations = 100000;
 
 
             var sw = new Stopwatch();
