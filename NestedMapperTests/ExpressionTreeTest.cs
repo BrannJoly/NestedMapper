@@ -42,7 +42,7 @@ namespace NestedMapperTests
         public void CheckThatNestedContructorCallWorks()
         {
 
-            var f = ExpressionTreeUtils.CreateNestedSetConstructor<Foo>(new List<string>(new[] { "myBar"})).Compile();
+            var f = ExpressionTreeUtils.CreateNestedSetConstructorLambda<Foo>(new List<string>(new[] { "myBar"})).Compile();
 
             var foo = new Foo { };
 

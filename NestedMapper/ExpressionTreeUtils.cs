@@ -29,7 +29,8 @@ namespace NestedMapper
             var expressions = new List<Expression>();
             expressions.Add(sourceParameterExpression);
             expressions.Add(targetParameterExpression);
-            
+
+
             var assignExpression = CreateNestedSetFromDynamicProperty<T>(targetPath, sourcePropertyName, targetParameterExpression, sourceParameterExpression);
             expressions.Add(assignExpression);
 
@@ -66,12 +67,26 @@ namespace NestedMapper
         }
 
 
-        public static Expression<Action<T>> CreateNestedSetConstructor<T>(IEnumerable<string> targetPath)
+        public static Expression<Action<T>> CreateNestedSetConstructorLambda<T>(IEnumerable<string> targetPath)
         {
 
             // target
             var targetParameterExpression = Expression.Parameter(typeof (T), "target");
 
+            var assignExpression = CreateNestedSetConstructor<T>(targetPath, targetParameterExpression);
+
+            if (assignExpression == null)
+                return null;
+
+            // (target) => target.nested.targetPath = (type) new object();
+            var lambdaAssign = Expression.Lambda<Action<T>>(assignExpression, targetParameterExpression);
+
+            return lambdaAssign;
+
+        }
+
+        private static BinaryExpression CreateNestedSetConstructor<T>(IEnumerable<string> targetPath, ParameterExpression targetParameterExpression)
+        {
             // target.nested.targetPath
             var propertyExpression = targetPath.Aggregate<string, Expression>(targetParameterExpression,
                 Expression.Property);
@@ -92,12 +107,7 @@ namespace NestedMapper
 
             //target.nested.targetPath = (type) new object();
             var assignExpression = Expression.Assign(propertyExpression, castedValueExpression);
-
-            // (target) => target.nested.targetPath = (type) new object();
-            var assign = Expression.Lambda<Action<T>>(assignExpression, targetParameterExpression);
-
-            return assign;
-
+            return assignExpression;
         }
     }
 }

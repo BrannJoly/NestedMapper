@@ -91,20 +91,27 @@ namespace NestedMapper
             x.MoveNext(); // will throw if we still have remaining fields now that seekedProperty.Type is null
 
 
-            var constructorActions =
-                mappings.Select(m => m.TargetPath.Take(m.TargetPath.Count - 1)).Distinct().Where(p => p.Count() != 0) //get all the distinct paths we assign to
-                .Select(ExpressionTreeUtils.CreateNestedSetConstructor<T>)
-                .Where(a=>a!=null) // if there's no default constructor, we'll ignore this action and hope the object is initialized properly by its parent. If it's not, we'll get a runtime error.
-                .ToList();
+            var constructorActions = GetConstructorActions<T>(mappings);
 
-
-
-            var mappingActions = getMappingAction<T>(mappings);
+            var mappingActions = GetMappingLambda<T>(mappings);
 
             return new Mapper<T>(mappingActions, constructorActions);
         }
 
-        private static List<Expression<Action<T, dynamic>>> getMappingAction<T>(List<Mapping> mappings) where T : new()
+        private static List<Expression<Action<T>>> GetConstructorActions<T>(List<Mapping> mappings) where T : new()
+        {
+            var constructorActions =
+                mappings.Select(m => m.TargetPath.Take(m.TargetPath.Count - 1))
+                    .Distinct()
+                    .Where(p => p.Count() != 0) //get all the distinct paths we assign to
+                    .Select(ExpressionTreeUtils.CreateNestedSetConstructorLambda<T>)
+                    .Where(a => a != null)
+                    // if there's no default constructor, we'll ignore this action and hope the object is initialized properly by its parent. If it's not, we'll get a runtime error.
+                    .ToList();
+            return constructorActions;
+        }
+
+        private static List<Expression<Action<T, dynamic>>> GetMappingLambda<T>(List<Mapping> mappings) where T : new()
         {
             // target
             var targetParameterExpression = Expression.Parameter(typeof(T), "target");
@@ -116,12 +123,7 @@ namespace NestedMapper
             expressions.Add(sourceParameterExpression);
             expressions.Add(targetParameterExpression);
 
-
-            var mappingActions =
-             mappings.Select(
-                 mapping =>
-                     ExpressionTreeUtils.CreateNestedSetFromDynamicProperty<T>(mapping.TargetPath,
-                         mapping.SourceProperty, targetParameterExpression, sourceParameterExpression)).ToList();
+            var mappingActions = GetMappingExpressions<T>(mappings, targetParameterExpression, sourceParameterExpression);
 
             expressions.AddRange(mappingActions);
 
@@ -133,6 +135,17 @@ namespace NestedMapper
 
             return new List<Expression<Action<T, dynamic>>> {assign};
 
+        }
+
+        private static List<BinaryExpression> GetMappingExpressions<T>(List<Mapping> mappings, ParameterExpression targetParameterExpression,
+            ParameterExpression sourceParameterExpression) where T : new()
+        {
+            var mappingActions =
+                mappings.Select(
+                    mapping =>
+                        ExpressionTreeUtils.CreateNestedSetFromDynamicProperty<T>(mapping.TargetPath,
+                            mapping.SourceProperty, targetParameterExpression, sourceParameterExpression)).ToList();
+            return mappingActions;
         }
 
 
