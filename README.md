@@ -3,20 +3,34 @@
 NestedMapper aims at automating the task of mapping structurally different objects representing the same information.
 
 ## Typical use case
-Let's say for example you have a type defined as such :
+Let's say for example you have a type defined as such:
 
 ```
-public class FooPosition
+public class NestedType
+        {
+
+            public int X { get; set; }
+            public int Y { get; set; }
+        }
+
+public class Foo
       {
           public string Name { get; set; }
 
-          public Point Position { get; set; }
+          public NestedType Position { get; set; }
       }
 ```
 
-It wouldn't be unusual for this data to be stored in a database in a Foo(Name, x, y) table
+It wouldn't be unusual for this data to be stored in a table defined this way:
 
-If you try using Dapper to get Foo objects, it won't magically work, and you'll have to manually write the mapping between Dapper's expando object and your own class, which is boring and error-prone
+```
+CREATE TABLE Foo(
+	Name [varchar](50) NOT NULL,
+	X integer NOT NULL,
+	y integer NOT NULL,
+```
+
+If you try using Dapper to get Foo objects, it won't magically work, and you'll have to manually write the mapping between Dapper's expando object and your own class, which is boring and error-prone.
 
 NestedMapper is a small library that automatically creates this mapping code. And since it compiles the mapping code, the performance is similar to the code you would have written manually.
 
@@ -30,13 +44,36 @@ Here is a sample call to the library to map to the above object:
         flatfoo.x = 45;
         flatfoo.y = 200;
 
-        var mapper = MapperFactory.GetMapper<FooPosition>(MapperFactory.PropertyNameEnforcement.InNestedTypesOnly, flatfoo);
+        var mapper = MapperFactory.GetMapper<Foo>(MapperFactory.PropertyNameEnforcement.InNestedTypesOnly, flatfoo);
         var foo = mapper.Map(flatfoo);
 
 ```
 
-## Mapper configuration
+## How does this work ?
 
 The mapper will flatten the target object, and then check that source and target objects have the same number of properties, and that their types perfectly match.
-the PropertyNameEnforcement enum controls whether mismatching names are allowed.
-Always and Never are self explanatory, and InNestedTypesOnly will only enforce perfectly matching names for properties defined at the top of the target object
+
+The way names mismatch are handled can be configured using the NamesMismatch enum:
+-AlwaysAllow will ignore names checks completely
+-NeverAllow will enforce strict member name equality everywhere
+-AllowInNestedTypesOnly will enforce matching field names only at the root of the mapped object.
+
+## default constructors requirement
+
+If there's a default constructor available for nested objects, the mapper will call it. If there's not, the mapper will just hope the parents take care of initializing their child objects propertly. If they don't, you'll get a nullref.
+
+## performance
+
+NestedMapper code performance is quite similar to a manual implementation like the one below. This is enforced in the unit tests.
+
+```
+	var foo = new Foo
+        {
+            Name = flatfoo.Name,
+            Position =
+            {
+                X = flatfoo.x,
+                Y = flatfoo.y
+            }
+        };
+````

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,16 +15,32 @@ namespace NestedMapper
 
     public class Mapper<T> : IMapper<T> where T : new()
     {
-        private readonly List<Action<T, dynamic>> _mappingActions;
+        private readonly List<Action<T>> _constructorActions = new List<Action<T>>();
+        private readonly List<Action<T, dynamic>> _mappingActions= new List<Action<T, dynamic>>();
 
-        public Mapper(List<Action<T, dynamic>> mappingActions)
+        public Mapper(List<Expression<Action<T, dynamic>>> mappingExpressions, List<Expression<Action<T>>> constructorExpressions)
         {
-            _mappingActions = mappingActions;
+
+            foreach (var action in constructorExpressions)
+            {
+                _constructorActions.Add(action.Compile());
+            }
+
+            foreach (var action in mappingExpressions)
+            {
+                _mappingActions.Add(action.Compile());
+            }
+
         }
 
         public T Map(object source)
         {
             var r = new T();
+
+            foreach (var action in _constructorActions)
+            {
+                action(r);
+            }
 
             foreach (var action in _mappingActions)
             {

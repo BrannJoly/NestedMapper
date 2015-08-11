@@ -21,15 +21,14 @@ namespace NestedMapperTests
 
             public FooMultipleNested()
             {
-                N1 = new MappingTest.NestedType();
-                N2 = new MappingTest.NestedType();
+
             }
         }
 
 
 
         [TestMethod]
-        public void DontMapIf_PropertyNameEnforcementIsAlways_AndNamesMismatch()
+        public void DontMapIf_PropertyNameEnforcementIs_NeverAllow_AndNamesMismatch()
         {
             dynamic flatfoo = new ExpandoObject();
             flatfoo.I = 1;
@@ -38,12 +37,12 @@ namespace NestedMapperTests
             flatfoo.N2A = DateTime.Today;
             flatfoo.N2B = "N1B";
 
-            Check.ThatCode(() => MapperFactory.GetMapper<MappingTest.Foo>(MapperFactory.PropertyNameEnforcement.Always, flatfoo).Map(flatfoo)).Throws<InvalidOperationException>();
+            Check.ThatCode(() => MapperFactory.GetMapper<MappingTest.Foo>(MapperFactory.NamesMismatch.NeverAllow, flatfoo).Map(flatfoo)).Throws<InvalidOperationException>();
 
         }
 
         [TestMethod]
-        public void DontMapIf_PropertyNameEnforcementIsInNestedTypesOnly_AndNamesMismatchOnTop()
+        public void DontMapIf_PropertyNameEnforcementIsIn_AllowInNestedTypesOnlyy_AndNamesMismatchOnTop()
         {
             dynamic flatfoo = new ExpandoObject();
             flatfoo.Mismatch = 1;
@@ -52,12 +51,12 @@ namespace NestedMapperTests
             flatfoo.N2A = DateTime.Today;
             flatfoo.N2B = "N1B";
 
-            Check.ThatCode(() => MapperFactory.GetMapper<MappingTest.Foo>(MapperFactory.PropertyNameEnforcement.InNestedTypesOnly, flatfoo).Map(flatfoo)).Throws<InvalidOperationException>();
+            Check.ThatCode(() => MapperFactory.GetMapper<MappingTest.Foo>(MapperFactory.NamesMismatch.AllowInNestedTypesOnly, flatfoo).Map(flatfoo)).Throws<InvalidOperationException>();
 
         }
 
         [TestMethod]
-        public void DoMapIf_PropertyNameEnforcementIsNever_AndNamesMismatch()
+        public void DoMapIf_PropertyNameEnforcementIs_AlwaysAllow_AndNamesMismatch()
         {
             dynamic flatfoo = new ExpandoObject();
             flatfoo.Mismatch = 1;
@@ -65,18 +64,18 @@ namespace NestedMapperTests
             flatfoo.N1B = "N1B";
             flatfoo.N2A = DateTime.Today;
             flatfoo.N2B = "N2B";
-            var foo = MapperFactory.GetMapper<FooMultipleNested>(MapperFactory.PropertyNameEnforcement.Never, flatfoo).Map(flatfoo);
+            FooMultipleNested foo = MapperFactory.GetMapper<FooMultipleNested>(MapperFactory.NamesMismatch.AlwaysAllow, flatfoo).Map(flatfoo);
 
-            Check.That(foo.I).Equals(1);
-            Check.That(foo.N1.A).Equals(DateTime.Today);
-            Check.That(foo.N1.B).Equals("N1B");
-            Check.That(foo.N2.A).Equals(DateTime.Today);
-            Check.That(foo.N2.B).Equals("N2B");
+            Check.That(foo.I).IsEqualTo(1);
+            Check.That(foo.N1.A).IsEqualTo(DateTime.Today);
+            Check.That(foo.N1.B).IsEqualTo("N1B");
+            Check.That(foo.N2.A).IsEqualTo(DateTime.Today);
+            Check.That(foo.N2.B).IsEqualTo("N2B");
         }
 
 
         [TestMethod]
-        public void DoMapIf_PropertyNameEnforcementIsInNestedTypesOnly_AndNamesMismatchOnlyInNestedTypes()
+        public void DoMapIf_PropertyNameEnforcement_AllowInNestedTypesOnly_AndNamesMismatchOnlyInNestedTypes()
         {
             dynamic flatfoo = new ExpandoObject();
             flatfoo.I = 1;
@@ -84,13 +83,13 @@ namespace NestedMapperTests
             flatfoo.N1B = "N1B";
             flatfoo.N2A = DateTime.Today;
             flatfoo.N2B = "N2B";
-            var foo = MapperFactory.GetMapper<FooMultipleNested>(MapperFactory.PropertyNameEnforcement.InNestedTypesOnly, flatfoo).Map(flatfoo);
+            FooMultipleNested foo = MapperFactory.GetMapper<FooMultipleNested>(MapperFactory.NamesMismatch.AllowInNestedTypesOnly, flatfoo).Map(flatfoo);
 
-            Check.That(foo.I).Equals(1);
-            Check.That(foo.N1.A).Equals(DateTime.Today);
-            Check.That(foo.N1.B).Equals("N1B");
-            Check.That(foo.N2.A).Equals(DateTime.Today);
-            Check.That(foo.N2.B).Equals("N2B");
+            Check.That(foo.I).IsEqualTo(1);
+            Check.That(foo.N1.A).IsEqualTo(DateTime.Today);
+            Check.That(foo.N1.B).IsEqualTo("N1B");
+            Check.That(foo.N2.A).IsEqualTo(DateTime.Today);
+            Check.That(foo.N2.B).IsEqualTo("N2B");
         }
 
 

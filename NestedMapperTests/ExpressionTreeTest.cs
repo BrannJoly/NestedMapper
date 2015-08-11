@@ -27,16 +27,31 @@ namespace NestedMapperTests
         public void CheckThatNestedAssignmentWorks()
         {
 
-            var f = ExpressionTreeUtils.CreateNestedSetFromDynamicProperty<Foo>(new List<string>(new[] {"myBar", "Test"}),"Input");
+            var f = ExpressionTreeUtils.CreateNestedSetFromDynamicProperty<Foo>(new List<string>(new[] {"myBar", "Test"}),"Input").Compile();
 
             var foo = new Foo { MyBar = new Bar() };
             dynamic myDynamic = new ExpandoObject();
             myDynamic.Input = "test";
 
-            f.Compile()(foo, myDynamic);
+            f(foo, myDynamic);
 
-            Check.That(foo.MyBar.Test).Equals(("test"));
+            Check.That(foo.MyBar.Test).IsEqualTo(("test"));
         }
+
+        [TestMethod]
+        public void CheckThatNestedContructorCallWorks()
+        {
+
+            var f = ExpressionTreeUtils.CreateNestedSetConstructor<Foo>(new List<string>(new[] { "myBar"})).Compile();
+
+            var foo = new Foo { };
+
+            f(foo);
+
+            Check.That(foo.MyBar).IsNotEqualTo(null);
+        }
+
+
 
     }
 }

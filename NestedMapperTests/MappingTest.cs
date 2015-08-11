@@ -12,6 +12,7 @@ namespace NestedMapperTests
     {
         public class NestedType
         {
+
             public DateTime A { get; set; }
             public string B { get; set; }
         }
@@ -22,10 +23,7 @@ namespace NestedMapperTests
 
             public NestedType N { get; set; }
 
-            public Foo()
-            {
-                N = new NestedType();
-            }
+
         }
 
         public class FlatFoo
@@ -35,7 +33,7 @@ namespace NestedMapperTests
             public string B { get; set; }
         }
 
-     
+
 
         [TestMethod]
         public void TestSimpleMappingScenario()
@@ -47,11 +45,11 @@ namespace NestedMapperTests
                 B = "B"
             };
 
-            var foo = MapperFactory.GetMapper<Foo>(MapperFactory.PropertyNameEnforcement.Always, flatfoo ). Map(flatfoo);
+            Foo foo = MapperFactory.GetMapper<Foo>(MapperFactory.NamesMismatch.NeverAllow, flatfoo ). Map(flatfoo);
 
-            Check.That(foo.I).Equals(1);
-            Check.That(foo.N.A).Equals(DateTime.Today);
-            Check.That(foo.N.B).Equals("B");
+            Check.That(foo.I).IsEqualTo(1);
+            Check.That(foo.N.A).IsEqualTo(DateTime.Today);
+            Check.That(foo.N.B).IsEqualTo("B");
 
         }
 
@@ -63,13 +61,13 @@ namespace NestedMapperTests
             flatfoo.I = 1;
             flatfoo.A = DateTime.Today;
             flatfoo.B = "N1B";
-         
 
-            var foo = MapperFactory.GetMapper<Foo>(MapperFactory.PropertyNameEnforcement.Always, flatfoo).Map(flatfoo);
 
-            Check.That(foo.I).Equals(1);
-            Check.That(foo.N.A).Equals(DateTime.Today);
-            Check.That(foo.N.B).Equals("B");
+            Foo foo = MapperFactory.GetMapper<Foo>(MapperFactory.NamesMismatch.NeverAllow, flatfoo).Map(flatfoo);
+
+            Check.That(foo.I).IsEqualTo(1);
+            Check.That(foo.N.A).IsEqualTo(DateTime.Today);
+            Check.That(foo.N.B).IsEqualTo("N1B");
 
         }
 
@@ -97,7 +95,7 @@ namespace NestedMapperTests
                 UnusedField =0
             };
 
-            Check.ThatCode(() => MapperFactory.GetMapper<Foo>(MapperFactory.PropertyNameEnforcement.Always, flatfoo).Map(flatfoo)).Throws<InvalidOperationException>();
+            Check.ThatCode(() => MapperFactory.GetMapper<Foo>(MapperFactory.NamesMismatch.NeverAllow, flatfoo).Map(flatfoo)).Throws<InvalidOperationException>();
 
         }
 
@@ -118,7 +116,7 @@ namespace NestedMapperTests
                 A = DateTime.Today,
             };
 
-            Check.ThatCode(() => MapperFactory.GetMapper<Foo>(MapperFactory.PropertyNameEnforcement.Always, flatfoo).Map(flatfoo)).Throws<InvalidOperationException>();
+            Check.ThatCode(() => MapperFactory.GetMapper<Foo>(MapperFactory.NamesMismatch.NeverAllow, flatfoo).Map(flatfoo)).Throws<InvalidOperationException>();
 
         }
 
@@ -141,7 +139,7 @@ namespace NestedMapperTests
                 B = "B"
             };
 
-            Check.ThatCode(() => MapperFactory.GetMapper<Foo>(MapperFactory.PropertyNameEnforcement.Always, flatfoo).Map(flatfoo)).Throws<InvalidOperationException>();
+            Check.ThatCode(() => MapperFactory.GetMapper<Foo>(MapperFactory.NamesMismatch.NeverAllow, flatfoo).Map(flatfoo)).Throws<InvalidOperationException>();
 
         }
 
@@ -150,24 +148,32 @@ namespace NestedMapperTests
             public string Name { get; set; }
 
             public Point Position { get; set; }
+
+            public FooPosition()
+            {
+                Position= new Point(0,0);
+            }
         }
 
 
         [TestMethod]
-        public void TestSimpleMappingScenarioBaseType()
+        public void MappingToANestedStructureWorks()
         {
             dynamic flatfoo = new ExpandoObject();
             flatfoo.Name = "Foo";
             flatfoo.x = 45;
             flatfoo.y = 200;
 
-            var foo = MapperFactory.GetMapper<FooPosition>(MapperFactory.PropertyNameEnforcement.InNestedTypesOnly, flatfoo).Map(flatfoo);
+            FooPosition fooPosition = MapperFactory.GetMapper<FooPosition>(MapperFactory.NamesMismatch.AllowInNestedTypesOnly, flatfoo).Map(flatfoo);
 
-            Check.That(foo.Name).Equals("Foo");
-            Check.That(foo.Position.X).Equals(DateTime.Today);
-            Check.That(foo.Position.Y).Equals("B");
+            Check.That(fooPosition.Name).IsEqualTo("Foo");
+            Check.That(fooPosition.Position.X).IsEqualTo(45);
+            Check.That(fooPosition.Position.Y).IsEqualTo(200);
+
+
 
         }
+
 
 
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using System.Dynamic;
 using System.Linq;
@@ -21,25 +22,31 @@ namespace NestedMapper
             }
         }
 
-
-        public static IMapper<T> GetMapper<T>(PropertyNameEnforcement propertyNameEnforcement, object sampleSourceObject) where T:new()
+        public class Mapping
         {
-            var mappingActions = new List<Action<T, dynamic>>();
+            public List<string> TargetPath { get; set; }
+            public string SourceProperty { get; set; }
 
-           
+            public Mapping(List<string> targetPath, string sourceProperty)
+            {
+                TargetPath = targetPath;
+                SourceProperty = sourceProperty;
+            }
+        }
 
+
+        private static List<PropertyBasicInfo> GetPropertyBasicInfos<T>(object sampleSourceObject) where T : new()
+        {
             List<PropertyBasicInfo> props;
 
             if (sampleSourceObject is ExpandoObject)
             {
-
-                var byName = (IDictionary<string, object>) sampleSourceObject;
+                var byName = (IDictionary<string, object>)sampleSourceObject;
 
                 props =
                     Dynamitey.Dynamic.GetMemberNames(sampleSourceObject)
                         .Select((propName => new PropertyBasicInfo(propName, byName[propName].GetType())))
                         .ToList();
-                
             }
             else
             {
@@ -48,12 +55,20 @@ namespace NestedMapper
                         .GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance)
                         .Select(prop => new PropertyBasicInfo(prop.Name, prop.PropertyType))
                         .ToList();
-
             }
+            return props;
+        }
+
+
+        public static IMapper<T> GetMapper<T>(NamesMismatch namesMismatch, object sampleSourceObject) where T:new()
+        {
+            var props = GetPropertyBasicInfos<T>(sampleSourceObject);
 
             var seekedProperty = props[0];
 
-            var x = TraverseObject(typeof(T), new Stack<string>(), seekedProperty, propertyNameEnforcement,true).GetEnumerator();
+            var x = TraverseObject(typeof(T), new Stack<string>(), seekedProperty, namesMismatch,true).GetEnumerator();
+
+            var mappings = new List<Mapping>();
 
             foreach (var prop in props)
             {
@@ -67,17 +82,31 @@ namespace NestedMapper
 
                 var foundPropertyPath = x.Current;
 
-                var exp = ExpressionTreeUtils.CreateNestedSetFromDynamicProperty<T>(foundPropertyPath, prop.Name);
-                mappingActions.Add(exp.Compile());
+                mappings.Add(new Mapping(foundPropertyPath, prop.Name));
+
             }
 
             seekedProperty.Type = null;
-            x.MoveNext(); // will throw if we still have remaining fields now that seekedProperty.Type is null 
-            return new Mapper<T>(mappingActions);
+            x.MoveNext(); // will throw if we still have remaining fields now that seekedProperty.Type is null
+
+
+            var constructorActions =
+                mappings.Select(m => m.TargetPath.Take(m.TargetPath.Count - 1)).Distinct().Where(p => p.Count() != 0) //get all the distinct paths we assign to
+                .Select(ExpressionTreeUtils.CreateNestedSetConstructor<T>)
+                .Where(a=>a!=null) // if there's no default constructor, we'll ignore this action and hope the object is initialized properly by its parent. If it's not, we'll get a runtime error.
+                .ToList();
+
+            var mappingActions = mappings.Select(mapping => ExpressionTreeUtils.CreateNestedSetFromDynamicProperty<T>(mapping.TargetPath, mapping.SourceProperty)).ToList();
+
+
+
+
+            return new Mapper<T>(mappingActions, constructorActions);
         }
 
 
-        static IEnumerable<List<string>> TraverseObject(Type t, Stack<string> path, PropertyBasicInfo propertyBasicInfo, PropertyNameEnforcement propertyNameEnforcement, bool topLevel )
+
+        static IEnumerable<List<string>> TraverseObject(Type t, Stack<string> path, PropertyBasicInfo propertyBasicInfo, NamesMismatch namesMismatch, bool topLevel )
         {
             var props = t.GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance );
 
@@ -101,8 +130,8 @@ namespace NestedMapper
                 if (prop.PropertyType == propertyBasicInfo.Type)
                 {
                     if (prop.Name == propertyBasicInfo.Name
-                        || propertyNameEnforcement == PropertyNameEnforcement.Never
-                        || (propertyNameEnforcement == PropertyNameEnforcement.InNestedTypesOnly && !topLevel)
+                        || namesMismatch == NamesMismatch.AlwaysAllow
+                        || (namesMismatch == NamesMismatch.AllowInNestedTypesOnly && !topLevel)
                         )
                     {
                         var currentPath = new List<string>(path) {prop.Name};
@@ -119,7 +148,7 @@ namespace NestedMapper
                 {
                     path.Push(prop.Name);
 
-                    foreach (var r in TraverseObject(prop.PropertyType, path, propertyBasicInfo, propertyNameEnforcement, false))
+                    foreach (var r in TraverseObject(prop.PropertyType, path, propertyBasicInfo, namesMismatch, false))
                     {
                         yield return r;
                     }
@@ -131,11 +160,11 @@ namespace NestedMapper
 
 
 
-        public enum PropertyNameEnforcement
+        public enum NamesMismatch
         {
-            Never,
-            InNestedTypesOnly,
-            Always
+            AlwaysAllow,
+            AllowInNestedTypesOnly,
+            NeverAllow
         }
 
 

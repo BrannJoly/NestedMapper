@@ -45,15 +45,15 @@ namespace NestedMapperTests
         }
 
         [TestMethod]
-        public void NestedMapperIsntSlowerThanNativeMapper()
+        public void NestedMapperHasTheSameOrderOfMagnitudeThanNativeMapper()
         {
             dynamic flatfoo = new ExpandoObject();
             flatfoo.I = 1;
             flatfoo.A = DateTime.Today;
             flatfoo.B = "N1B";
 
-            const int iterations = 100000;
-            
+            const int iterations = 1000000;
+
 
             var sw = new Stopwatch();
             sw.Start();
@@ -61,20 +61,26 @@ namespace NestedMapperTests
             var dontinline = 0;
             for (var i = 0; i < iterations; i++)
             {
-                var foo = new Foo();
-                foo.I = flatfoo.I;
-                foo.N.A = flatfoo.A;
-                foo.N.B = flatfoo.B;
+                var foo = new Foo
+                {
+                    I = flatfoo.I,
+                    N =
+                    {
+                        A = flatfoo.A,
+                        B = flatfoo.B
+                    }
+                };
                 dontinline += foo.I;
+                GC.KeepAlive(foo);
             }
 
            sw.Stop();
 
-           var mapper = MapperFactory.GetMapper<Foo>(MapperFactory.PropertyNameEnforcement.Always, flatfoo);
+           var mapper = MapperFactory.GetMapper<Foo>(MapperFactory.NamesMismatch.NeverAllow, flatfoo);
 
-           
 
-            Check.ThatCode(() => PerformanceMapTest(1000, mapper, flatfoo)).LastsLessThan(sw.ElapsedMilliseconds*1.1, TimeUnit.Milliseconds);
+
+            Check.ThatCode(() => PerformanceMapTest(iterations, mapper, flatfoo)).LastsLessThan(2*sw.ElapsedMilliseconds, TimeUnit.Milliseconds);
         }
     }
 }
