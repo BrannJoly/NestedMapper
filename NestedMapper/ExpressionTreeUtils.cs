@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Net.WebSockets;
-using System.Reflection;
 using Microsoft.CSharp.RuntimeBinder;
 using Binder = Microsoft.CSharp.RuntimeBinder.Binder;
 
@@ -26,12 +24,10 @@ namespace NestedMapper
             // source
             var sourceParameterExpression = Expression.Parameter(typeof(object), "source");
 
-            var expressions = new List<Expression>();
-            expressions.Add(sourceParameterExpression);
-            expressions.Add(targetParameterExpression);
+            var expressions = new List<Expression> {sourceParameterExpression, targetParameterExpression};
 
 
-            var assignExpression = CreateNestedSetFromDynamicProperty<T>(targetPath, sourcePropertyName, targetParameterExpression, sourceParameterExpression);
+            var assignExpression = CreateNestedSetFromDynamicProperty(targetPath, sourcePropertyName, targetParameterExpression, sourceParameterExpression);
             expressions.Add(assignExpression);
 
             var block = Expression.Block(expressions);
@@ -44,7 +40,7 @@ namespace NestedMapper
 
         }
 
-        public static BinaryExpression CreateNestedSetFromDynamicProperty<T>(List<string> targetPath, string sourcePropertyName,
+        public static BinaryExpression CreateNestedSetFromDynamicProperty(List<string> targetPath, string sourcePropertyName,
             ParameterExpression targetParameterExpression, ParameterExpression sourceParameterExpression)
         {
             // target.nested.targetPath
@@ -73,7 +69,7 @@ namespace NestedMapper
             // target
             var targetParameterExpression = Expression.Parameter(typeof (T), "target");
 
-            var assignExpression = CreateNestedSetConstructor<T>(targetPath, targetParameterExpression);
+            var assignExpression = CreateNestedSetConstructor(targetPath, targetParameterExpression);
 
             if (assignExpression == null)
                 return null;
@@ -85,7 +81,7 @@ namespace NestedMapper
 
         }
 
-        private static BinaryExpression CreateNestedSetConstructor<T>(IEnumerable<string> targetPath, ParameterExpression targetParameterExpression)
+        private static BinaryExpression CreateNestedSetConstructor(IEnumerable<string> targetPath, ParameterExpression targetParameterExpression)
         {
             // target.nested.targetPath
             var propertyExpression = targetPath.Aggregate<string, Expression>(targetParameterExpression,

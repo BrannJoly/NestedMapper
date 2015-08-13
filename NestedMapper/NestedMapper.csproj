@@ -47,6 +47,7 @@
     <Compile Include="ExpressionTreeUtils.cs" />
     <Compile Include="Mapper.cs" />
     <Compile Include="MapperFactory.cs" />
+    <Compile Include="MappingsGetter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -44,7 +44,7 @@ namespace NestedMapperTests
 
             var f = ExpressionTreeUtils.CreateNestedSetConstructorLambda<Foo>(new List<string>(new[] { "myBar"})).Compile();
 
-            var foo = new Foo { };
+            var foo = new Foo();
 
             f(foo);
 

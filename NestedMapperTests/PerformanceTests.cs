@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Drawing;
 using System.Dynamic;
-using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NestedMapper;
 using NFluent;
@@ -58,7 +56,6 @@ namespace NestedMapperTests
             var sw = new Stopwatch();
             sw.Start();
 
-            var dontinline = 0;
             for (var i = 0; i < iterations; i++)
             {
                 var foo = new Foo
@@ -70,15 +67,12 @@ namespace NestedMapperTests
                         B = flatfoo.B
                     }
                 };
-                dontinline += foo.I;
                 GC.KeepAlive(foo);
             }
 
            sw.Stop();
 
            var mapper = MapperFactory.GetMapper<Foo>(MapperFactory.NamesMismatch.NeverAllow, flatfoo);
-
-
 
             Check.ThatCode(() => PerformanceMapTest(iterations, mapper, flatfoo)).LastsLessThan(2*sw.ElapsedMilliseconds, TimeUnit.Milliseconds);
         }

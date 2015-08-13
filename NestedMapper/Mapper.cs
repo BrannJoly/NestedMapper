@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NestedMapper
 {
-
     public interface IMapper<out T> where T : new()
     {
         T Map(object source);

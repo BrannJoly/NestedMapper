@@ -95,7 +95,7 @@ namespace NestedMapperTests
                 UnusedField =0
             };
 
-            Check.ThatCode(() => MapperFactory.GetMapper<Foo>(MapperFactory.NamesMismatch.NeverAllow, flatfoo).Map(flatfoo)).Throws<InvalidOperationException>();
+            Check.ThatCode(() => MapperFactory.GetMapper<Foo>(MapperFactory.NamesMismatch.NeverAllow, flatfoo).Map(flatfoo)).Throws<InvalidOperationException>().WithMessage("too many fields in the flat object");
 
         }
 
@@ -116,7 +116,7 @@ namespace NestedMapperTests
                 A = DateTime.Today,
             };
 
-            Check.ThatCode(() => MapperFactory.GetMapper<Foo>(MapperFactory.NamesMismatch.NeverAllow, flatfoo).Map(flatfoo)).Throws<InvalidOperationException>();
+            Check.ThatCode(() => MapperFactory.GetMapper<Foo>(MapperFactory.NamesMismatch.NeverAllow, flatfoo).Map(flatfoo)).Throws<InvalidOperationException>().WithMessage("Not enough fields in the flat object");
 
         }
 
@@ -139,7 +139,7 @@ namespace NestedMapperTests
                 B = "B"
             };
 
-            Check.ThatCode(() => MapperFactory.GetMapper<Foo>(MapperFactory.NamesMismatch.NeverAllow, flatfoo).Map(flatfoo)).Throws<InvalidOperationException>();
+            Check.ThatCode(() => MapperFactory.GetMapper<Foo>(MapperFactory.NamesMismatch.NeverAllow, flatfoo).Map(flatfoo)).Throws<InvalidOperationException>().WithMessage("Type mismatch for property I") ;
 
         }
 

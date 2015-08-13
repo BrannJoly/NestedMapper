@@ -7,7 +7,7 @@ This is typically the case when you want to map a flat object you retrieved from
 ## Typical use case
 Let's say for example you have a type defined as such:
 
-```
+```csharp
 public class NestedType
     {
 
@@ -34,7 +34,7 @@ CREATE TABLE Foo(
 
 And dapper will give you an object looking like this:
 
-```
+```csharp
 dynamic flatfoo = new ExpandoObject();
 flatfoo.Name = "Foo";
 flatfoo.x = 45;
@@ -45,7 +45,7 @@ flatfoo.y = 200;
 
 If you try using Dapper to get Foo objects, it won't magically work, and you'll have to manually write the mapping between Dapper's expando object and your own class, which is boring and error-prone, eg:
 
-```
+```csharp
 var foo = new Foo
 {
     Name = flatfoo.Name,
@@ -59,7 +59,7 @@ var foo = new Foo
 
 Using NestedMapper, here's what you would do:
 
-```
+```csharp
         var mapper = MapperFactory.GetMapper<Foo>(MapperFactory.PropertyNameEnforcement.InNestedTypesOnly, flatfoo);
         var foo = mapper.Map(flatfoo);
 
@@ -81,3 +81,7 @@ If there's a default constructor available for nested objects, the mapper will c
 ## performance
 
 NestedMapper code performance is quite similar to a manual implementation like the one below. This is enforced in the unit tests.
+
+## Current limitations
+
+Nested structures aren't handled properly for now.
