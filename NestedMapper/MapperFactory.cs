@@ -15,7 +15,7 @@ namespace NestedMapper
             NeverAllow
         }
 
-        public static IMapper<T> GetMapper<T>(NamesMismatch namesMismatch, object sampleSourceObject) where T : new()
+        public static IMapper<T> GetMapper<T>(object sampleSourceObject, NamesMismatch namesMismatch= NamesMismatch.NeverAllow) where T : new()
         {
             var mappings = MappingsGetter.GetMappings<T>(namesMismatch, sampleSourceObject);
 

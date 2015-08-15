@@ -51,10 +51,10 @@ namespace NestedMapperTests
 
             sw.Stop();
 
-            var mapper = MapperFactory.GetMapper<Foo>(MapperFactory.NamesMismatch.NeverAllow, flatfoo);
+            var mapper = MapperFactory.GetMapper<Foo>(flatfoo, MapperFactory.NamesMismatch.NeverAllow);
 
             Check.ThatCode(() => PerformanceMapTest(iterations, mapper, flatfoo))
-                .LastsLessThan(2*sw.ElapsedMilliseconds, TimeUnit.Milliseconds);
+                .LastsLessThan(5*sw.ElapsedMilliseconds, TimeUnit.Milliseconds);
         }
     }
 }

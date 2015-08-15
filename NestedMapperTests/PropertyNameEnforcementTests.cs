@@ -33,7 +33,7 @@ namespace NestedMapperTests
             flatfoo.N2B = "N1B";
 
             Check.ThatCode(
-                () => MapperFactory.GetMapper<Foo>(MapperFactory.NamesMismatch.NeverAllow, flatfoo).Map(flatfoo))
+                () => MapperFactory.GetMapper<Foo>(flatfoo, MapperFactory.NamesMismatch.NeverAllow).Map(flatfoo))
                 .Throws<InvalidOperationException>();
             //.WithMessage("Name mismatch for property A");
 
@@ -51,7 +51,7 @@ namespace NestedMapperTests
 
             Check.ThatCode(
                 () =>
-                    MapperFactory.GetMapper<Foo>(MapperFactory.NamesMismatch.AllowInNestedTypesOnly, flatfoo)
+                    MapperFactory.GetMapper<Foo>(flatfoo, MapperFactory.NamesMismatch.AllowInNestedTypesOnly)
                         .Map(flatfoo))
                 .Throws<InvalidOperationException>();
             //.WithMessage("Name mismatch for property I");
@@ -67,7 +67,7 @@ namespace NestedMapperTests
             flatfoo.N1B = "N1B";
             flatfoo.N2A = DateTime.Today;
             flatfoo.N2B = "N2B";
-            FooMultipleNested foo = MapperFactory.GetMapper<FooMultipleNested>(MapperFactory.NamesMismatch.AlwaysAllow, flatfoo).Map(flatfoo);
+            FooMultipleNested foo = MapperFactory.GetMapper<FooMultipleNested>(flatfoo, MapperFactory.NamesMismatch.AlwaysAllow).Map(flatfoo);
 
             Check.That(foo.I).IsEqualTo(1);
             Check.That(foo.N1.A).IsEqualTo(DateTime.Today);
@@ -86,7 +86,7 @@ namespace NestedMapperTests
             flatfoo.N1B = "N1B";
             flatfoo.N2A = DateTime.Today;
             flatfoo.N2B = "N2B";
-            FooMultipleNested foo = MapperFactory.GetMapper<FooMultipleNested>(MapperFactory.NamesMismatch.AllowInNestedTypesOnly, flatfoo).Map(flatfoo);
+            FooMultipleNested foo = MapperFactory.GetMapper<FooMultipleNested>(flatfoo, MapperFactory.NamesMismatch.AllowInNestedTypesOnly).Map(flatfoo);
 
             Check.That(foo.I).IsEqualTo(1);
             Check.That(foo.N1.A).IsEqualTo(DateTime.Today);

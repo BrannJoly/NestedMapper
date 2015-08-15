@@ -37,7 +37,7 @@ namespace NestedMapperTests
 
             var flatfoo = connection.Query("select 1 as I, cast ('" + DateTime.Today.ToString("yyyyMMdd") + "' as date) A, 'N1B' as B").Single();
 
-            Foo foo = MapperFactory.GetMapper<Foo>(MapperFactory.NamesMismatch.NeverAllow, flatfoo).Map(flatfoo);
+            Foo foo = MapperFactory.GetMapper<Foo>(flatfoo, MapperFactory.NamesMismatch.NeverAllow).Map(flatfoo);
 
 
             Check.That(foo.I).IsEqualTo(1);
