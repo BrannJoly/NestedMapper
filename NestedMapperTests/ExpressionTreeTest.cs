@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Dynamic;
+using System.Linq.Expressions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NestedMapper;
 using NFluent;
@@ -51,7 +53,6 @@ namespace NestedMapperTests
             Check.That(foo.MyBar).IsNotEqualTo(null);
         }
 
-
-
+ 
     }
 }
