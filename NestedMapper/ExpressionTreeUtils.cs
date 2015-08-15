@@ -47,15 +47,14 @@ namespace NestedMapper
             var propertyExpression = targetPath.Aggregate<string, Expression>(targetParameterExpression,
                 Expression.Property);
 
-
+            // source.sourceProperty
             var binder = Binder.GetMember(CSharpBinderFlags.None, sourcePropertyName, typeof (ExpressionTreeUtils),
                 new[] {CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null)});
-
-            // source.sourceProperty
             var sourcePropertyExpression = Expression.Dynamic(binder, typeof (object), sourceParameterExpression);
 
             // (type) source.sourceProperty;
-            var castedValueExpression = Expression.Convert(sourcePropertyExpression, propertyExpression.Type);
+            var convertBinder = Binder.Convert(CSharpBinderFlags.ConvertExplicit, propertyExpression.Type, typeof(ExpressionTreeUtils));
+            var castedValueExpression = Expression.Dynamic(convertBinder, propertyExpression.Type, sourcePropertyExpression);
 
             //target.nested.targetPath = (type) source.sourceProperty;
             var assignExpression = Expression.Assign(propertyExpression, castedValueExpression);
