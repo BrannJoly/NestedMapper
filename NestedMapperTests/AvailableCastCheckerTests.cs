@@ -1,6 +1,4 @@
-﻿using System;
-using System.Dynamic;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NestedMapper;
 using NFluent;
 
