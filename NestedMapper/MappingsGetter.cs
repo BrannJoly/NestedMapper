@@ -81,19 +81,16 @@ namespace NestedMapper
         static InvalidOperationException GetException(string message, List<MappingsGetter.Mapping> mappings)
         {
             StringBuilder sb = new StringBuilder();
-            sb.Append(message);
-            sb.Append(Environment.NewLine);
+            sb.AppendLine(message);
 
             if (mappings.Count > 0)
             {
-                sb.Append("current mappings so far : ");
-                sb.Append(Environment.NewLine);
+                sb.AppendLine("current mappings so far : ");
             }
 
             foreach (var m in mappings)
             {
-                sb.Append(m);
-                sb.Append(Environment.NewLine);
+                sb.AppendLine(m.ToString());
             }
 
             return new InvalidOperationException(sb.ToString());

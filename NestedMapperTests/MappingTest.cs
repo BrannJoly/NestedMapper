@@ -181,8 +181,8 @@ namespace NestedMapperTests
         {
             dynamic flatFooSource = new ExpandoObject();
             flatFooSource.I = 1;
-            flatFooSource.A = DateTime.Today;
-            flatFooSource.B = null;
+            flatFooSource.A = null;
+            flatFooSource.B = "N1B";
 
             var mapper = MapperFactory.GetMapper<Foo>(MapperFactory.NamesMismatch.NeverAllow, flatFooSource);
 
