@@ -13,7 +13,7 @@ namespace NestedMapper
             {
                 return true;
             }
-            if (HasImplicitConversion(@from, to))
+            if (HasImplicitConversion(from, from, to)|| HasImplicitConversion(to, from, to))
             {
                 return true;
             }
@@ -26,7 +26,8 @@ namespace NestedMapper
             return false;
         }
 
-        public static Dictionary<Type,List<Type>> ImplicitNumericConversions = new Dictionary<Type, List<Type>>();
+        // https://msdn.microsoft.com/en-us/library/y5b434w4.aspx
+        static Dictionary<Type,List<Type>> ImplicitNumericConversions = new Dictionary<Type, List<Type>>();
 
         static AvailableCastChecker()
         {
@@ -42,14 +43,16 @@ namespace NestedMapper
             ImplicitNumericConversions.Add(typeof(ulong), new List<Type> { typeof(float), typeof(double), typeof(decimal) });
         }
 
-        public static bool HasImplicitConversion(Type baseType, Type targetType)
+        static bool HasImplicitConversion(Type definedOn, Type baseType, Type targetType)
         {
-            return baseType.GetMethods(BindingFlags.Public | BindingFlags.Static)
+            return definedOn.GetMethods(BindingFlags.Public | BindingFlags.Static)
                 .Where(mi => mi.Name == "op_Implicit" && mi.ReturnType == targetType)
-                .Any(mi => {
-                               ParameterInfo pi = mi.GetParameters().FirstOrDefault();
-                               return pi != null && pi.ParameterType == baseType;
+                .Any(mi =>
+                {
+                    ParameterInfo pi = mi.GetParameters().FirstOrDefault();
+                    return pi != null && pi.ParameterType == baseType;
                 });
+                
         }
     }
 }
