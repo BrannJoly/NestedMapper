@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 
@@ -20,15 +19,30 @@ namespace NestedMapper
             }
         }
 
+
+
+        class TreeMapperController : PropertyBasicInfo
+        {
+            public bool StopMapping { get; set; }
+
+            public TreeMapperController(PropertyBasicInfo x) : base(x.Name, x.Type)
+            {
+
+            }
+        }
+
         public class Mapping
         {
             public List<string> TargetPath { get; set; }
             public string SourceProperty { get; set; }
+            public Type PropertyType { get; set; }
 
-            public Mapping(List<string> targetPath, string sourceProperty)
+            public Mapping(List<string> targetPath, string sourceProperty, Type propertyType)
             {
                 TargetPath = targetPath;
                 SourceProperty = sourceProperty;
+                PropertyType = propertyType;
+
             }
         }
 
@@ -36,14 +50,12 @@ namespace NestedMapper
         {
             List<PropertyBasicInfo> props;
 
-            if (sampleSourceObject is ExpandoObject)
+            if (sampleSourceObject is IDictionary<string, object>) // ie is dynamic
             {
                 var byName = (IDictionary<string, object>)sampleSourceObject;
 
-                props =
-                    Dynamitey.Dynamic.GetMemberNames(sampleSourceObject)
-                        .Select((propName => new PropertyBasicInfo(propName, byName[propName].GetType())))
-                        .ToList();
+                props = byName.Select(x => new PropertyBasicInfo(x.Key, x.Value?.GetType())).ToList();
+
             }
             else
             {
@@ -60,16 +72,16 @@ namespace NestedMapper
         {
             var props = GetPropertyBasicInfos(sampleSourceObject);
 
-            var seekedProperty = props[0];
+            var treeMapperController = new TreeMapperController(props[0]);
 
-            var x = TraverseObject(typeof (T), new Stack<string>(), seekedProperty, namesMismatch, true).GetEnumerator();
+            var x = TraverseObject(typeof (T), new Stack<string>(), treeMapperController, namesMismatch, true).GetEnumerator();
 
             var mappings = new List<Mapping>();
 
             foreach (var prop in props)
             {
-                seekedProperty.Name = prop.Name;
-                seekedProperty.Type = prop.Type;
+                treeMapperController.Name = prop.Name;
+                treeMapperController.Type = prop.Type;
 
                 if (!x.MoveNext())
                 {
@@ -78,21 +90,21 @@ namespace NestedMapper
 
                 var foundPropertyPath = x.Current;
 
-                mappings.Add(new Mapping(foundPropertyPath, prop.Name));
+                mappings.Add(new Mapping(foundPropertyPath, prop.Name, prop.Type));
             }
 
-            seekedProperty.Type = null;
-            x.MoveNext(); // will throw if we still have remaining fields now that seekedProperty.Type is null
+            treeMapperController.StopMapping = true;
+            x.MoveNext(); // will throw if we still have remaining fields now that StopMapping is true
             return mappings;
         }
 
-        private static IEnumerable<List<string>> TraverseObject(Type t, Stack<string> path, PropertyBasicInfo propertyBasicInfo, MapperFactory.NamesMismatch namesMismatch, bool topLevel)
+        private static IEnumerable<List<string>> TraverseObject(Type t, Stack<string> path, TreeMapperController seekedProperty, MapperFactory.NamesMismatch namesMismatch, bool topLevel)
         {
             var props = t.GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance);
 
             if (props.Length == 0)
             {
-                throw new InvalidOperationException("Type mismatch for property " + propertyBasicInfo.Name);
+                throw new InvalidOperationException("Type mismatch for property " + seekedProperty.Name);
             }
 
             foreach (var prop in props)
@@ -102,14 +114,14 @@ namespace NestedMapper
                     continue;
                 }
 
-                if (propertyBasicInfo.Type == null)
+                if (seekedProperty.StopMapping)
                 {
                     throw new InvalidOperationException("Not enough fields in the flat object");
                 }
 
-                if (prop.PropertyType == propertyBasicInfo.Type)
+                if (seekedProperty.Type == null || prop.PropertyType == seekedProperty.Type )
                 {
-                    if (prop.Name == propertyBasicInfo.Name
+                    if (prop.Name == seekedProperty.Name
                         || namesMismatch == MapperFactory.NamesMismatch.AlwaysAllow
                         || (namesMismatch == MapperFactory.NamesMismatch.AllowInNestedTypesOnly && !topLevel)
                         )
@@ -128,7 +140,7 @@ namespace NestedMapper
                 {
                     path.Push(prop.Name);
 
-                    foreach (var r in TraverseObject(prop.PropertyType, path, propertyBasicInfo, namesMismatch, false))
+                    foreach (var r in TraverseObject(prop.PropertyType, path, seekedProperty, namesMismatch, false))
                     {
                         yield return r;
                     }

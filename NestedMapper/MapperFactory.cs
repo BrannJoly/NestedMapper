@@ -24,7 +24,6 @@ namespace NestedMapper
             return new Mapper<T>(GetMappingLambda<T>(mappings).Compile(), constructorActions);
         }
 
-
         private static List<Expression<Action<T>>> GetConstructorActions<T>(List<MappingsGetter.Mapping> mappings) where T : new()
         {
             var constructorActions =

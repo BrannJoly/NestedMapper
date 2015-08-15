@@ -10,27 +10,6 @@ namespace NestedMapperTests
     [TestClass]
     public class PerformanceTests
     {
-
-
-        public class NestedType
-        {
-            public DateTime A { get; set; }
-            public string B { get; set; }
-        }
-
-        public class Foo
-        {
-            public int I { get; set; }
-
-            public NestedType N { get; set; }
-
-            public Foo()
-            {
-                N = new NestedType();
-            }
-        }
-
-
         private int PerformanceMapTest(int iterations, IMapper<Foo> mapper, dynamic source)
         {
             var dontinline = 0;
@@ -70,11 +49,12 @@ namespace NestedMapperTests
                 GC.KeepAlive(foo);
             }
 
-           sw.Stop();
+            sw.Stop();
 
-           var mapper = MapperFactory.GetMapper<Foo>(MapperFactory.NamesMismatch.NeverAllow, flatfoo);
+            var mapper = MapperFactory.GetMapper<Foo>(MapperFactory.NamesMismatch.NeverAllow, flatfoo);
 
-            Check.ThatCode(() => PerformanceMapTest(iterations, mapper, flatfoo)).LastsLessThan(2*sw.ElapsedMilliseconds, TimeUnit.Milliseconds);
+            Check.ThatCode(() => PerformanceMapTest(iterations, mapper, flatfoo))
+                .LastsLessThan(2*sw.ElapsedMilliseconds, TimeUnit.Milliseconds);
         }
     }
 }

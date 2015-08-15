@@ -170,9 +170,34 @@ namespace NestedMapperTests
             Check.That(fooPosition.Position.X).IsEqualTo(45);
             Check.That(fooPosition.Position.Y).IsEqualTo(200);
 
+        }
 
+
+        [TestMethod]
+        public void TestSimpleMappingScenarioWithExpandoObjectAndUnknownType()
+        {
+            dynamic flatFooSource = new ExpandoObject();
+            flatFooSource.I = 1;
+            flatFooSource.A = DateTime.Today;
+            flatFooSource.B = null;
+
+            var mapper = MapperFactory.GetMapper<Foo>(MapperFactory.NamesMismatch.NeverAllow, flatFooSource);
+
+
+
+            dynamic flatFoo = new ExpandoObject();
+            flatFoo.I = 1;
+            flatFoo.A = DateTime.Today;
+            flatFoo.B = "N1B";
+
+            Foo foo =mapper.Map(flatFoo);
+
+            Check.That(foo.I).IsEqualTo(1);
+            Check.That(foo.N.A).IsEqualTo(DateTime.Today);
+            Check.That(foo.N.B).IsEqualTo("N1B");
 
         }
+
 
 
 
