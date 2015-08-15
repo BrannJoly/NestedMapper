@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -23,11 +22,11 @@ namespace NestedMapper
 
 
 
-        class TreeMapperController : MappingsGetter.PropertyBasicInfo
+        class TreeMapperController : PropertyBasicInfo
         {
             public bool StopMapping { get; set; }
 
-            public List<Mapping> mappings { get; } =  new List<Mapping>();
+            public List<Mapping> Mappings { get; } =  new List<Mapping>();
 
             public TreeMapperController(PropertyBasicInfo x) : base(x.Name, x.Type)
             {
@@ -56,15 +55,15 @@ namespace NestedMapper
             }
         }
 
-        private static List<MappingsGetter.PropertyBasicInfo> GetPropertyBasicInfos(object sampleSourceObject)
+        private static List<PropertyBasicInfo> GetPropertyBasicInfos(object sampleSourceObject)
         {
-            List<MappingsGetter.PropertyBasicInfo> props;
+            List<PropertyBasicInfo> props;
 
             if (sampleSourceObject is IDictionary<string, object>) // ie is dynamic
             {
                 var byName = (IDictionary<string, object>)sampleSourceObject;
 
-                props = byName.Select(x => new MappingsGetter.PropertyBasicInfo(x.Key, x.Value?.GetType())).ToList();
+                props = byName.Select(x => new PropertyBasicInfo(x.Key, x.Value?.GetType())).ToList();
 
             }
             else
@@ -72,13 +71,13 @@ namespace NestedMapper
                 props =
                     sampleSourceObject.GetType()
                         .GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance)
-                        .Select(prop => new MappingsGetter.PropertyBasicInfo(prop.Name, prop.PropertyType))
+                        .Select(prop => new PropertyBasicInfo(prop.Name, prop.PropertyType))
                         .ToList();
             }
             return props;
         }
 
-        static InvalidOperationException GetException(string message, List<MappingsGetter.Mapping> mappings)
+        static InvalidOperationException GetException(string message, List<Mapping> mappings)
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine(message);
@@ -96,13 +95,13 @@ namespace NestedMapper
             return new InvalidOperationException(sb.ToString());
         }
 
-        public static List<MappingsGetter.Mapping> GetMappings<T>(MapperFactory.NamesMismatch namesMismatch, object sampleSourceObject) where T : new()
+        public static List<Mapping> GetMappings<T>(object sampleSourceObject, MapperFactory.NamesMismatch namesMismatch, IEnumerable<Type> assumeNullWontBeMappedToThoseTypes) where T : new()
         {
             var props = GetPropertyBasicInfos(sampleSourceObject);
 
-            var treeMapperController = new MappingsGetter.TreeMapperController(props[0]);
+            var treeMapperController = new TreeMapperController(props[0]);
 
-            var x = TraverseObject(typeof (T), new Stack<string>(), treeMapperController, namesMismatch, true).GetEnumerator();
+            var x = TraverseObject(typeof (T), new Stack<string>(), treeMapperController, namesMismatch, assumeNullWontBeMappedToThoseTypes, true).GetEnumerator();
 
           
 
@@ -113,27 +112,38 @@ namespace NestedMapper
 
                 if (!x.MoveNext())
                 {
-                    throw GetException("Too many fields in the flat object",treeMapperController.mappings);
+                    throw GetException("Too many fields in the flat object",treeMapperController.Mappings);
                 }
 
                 var foundPropertyPath = x.Current;
 
-                treeMapperController.mappings.Add(new MappingsGetter.Mapping(foundPropertyPath, prop.Name, prop.Type));
+                treeMapperController.Mappings.Add(new Mapping(foundPropertyPath, prop.Name, prop.Type));
             }
 
             treeMapperController.StopMapping = true;
             x.MoveNext(); // will throw if we still have remaining fields now that StopMapping is true
-            return treeMapperController.mappings;
+            return treeMapperController.Mappings;
+        }
+
+        private static bool ListContainsType(IEnumerable<Type> list, Type type)
+        {
+            if (list.Contains(type))
+                return true;
+
+            if (type.IsGenericType)
+                return list.Contains(type.GetGenericTypeDefinition());
+
+            return false;
         }
 
 
-        private static IEnumerable<List<string>> TraverseObject(Type t, Stack<string> path, MappingsGetter.TreeMapperController treeMapperController, MapperFactory.NamesMismatch namesMismatch, bool topLevel)
+        private static IEnumerable<List<string>> TraverseObject(Type t, Stack<string> path, TreeMapperController treeMapperController, MapperFactory.NamesMismatch namesMismatch, IEnumerable<Type> assumeNullWontBeMappedToThoseTypes, bool topLevel)
         {
             var props = t.GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance);
 
             if (props.Length == 0)
             {
-                throw GetException("Type mismatch for property", treeMapperController.mappings);
+                throw GetException("Type mismatch for property", treeMapperController.Mappings);
              }
 
             foreach (var prop in props)
@@ -145,12 +155,11 @@ namespace NestedMapper
 
                 if (treeMapperController.StopMapping)
                 {
-                    throw GetException("Not enough fields in the flat object", treeMapperController.mappings);
+                    throw GetException("Not enough fields in the flat object", treeMapperController.Mappings);
                 }
 
-                if (treeMapperController.Type == null 
-                    || prop.PropertyType == treeMapperController.Type 
-                    || AvailableCastChecker.CanCast(treeMapperController.Type, prop.PropertyType)
+                if ( (treeMapperController.Type == null  && !ListContainsType(assumeNullWontBeMappedToThoseTypes, prop.PropertyType) )
+                    || (treeMapperController.Type != null && AvailableCastChecker.CanCast(treeMapperController.Type, prop.PropertyType))
                     )
                 {
                     if (prop.Name == treeMapperController.Name
@@ -163,7 +172,7 @@ namespace NestedMapper
                     }
                     else
                     {
-                        throw GetException("Name mismatch for property " + prop.Name, treeMapperController.mappings);
+                        throw GetException("Name mismatch for property " + prop.Name, treeMapperController.Mappings);
 
                     }
 
@@ -172,7 +181,7 @@ namespace NestedMapper
                 {
                     path.Push(prop.Name);
 
-                    foreach (var r in MappingsGetter.TraverseObject(prop.PropertyType, path, treeMapperController, namesMismatch, false))
+                    foreach (var r in TraverseObject(prop.PropertyType, path, treeMapperController, namesMismatch, assumeNullWontBeMappedToThoseTypes, false))
                     {
                         yield return r;
                     }

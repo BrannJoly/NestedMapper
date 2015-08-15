@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Dynamic;
 using System.Linq.Expressions;
@@ -184,7 +185,7 @@ namespace NestedMapperTests
             flatFooSource.A = null;
             flatFooSource.B = "N1B";
 
-            var mapper = MapperFactory.GetMapper<Foo>(flatFooSource, MapperFactory.NamesMismatch.NeverAllow);
+            var mapper = MapperFactory.GetMapper<Foo>(flatFooSource, MapperFactory.NamesMismatch.NeverAllow, new List<Type> {typeof(NestedType) });
 
 
 
