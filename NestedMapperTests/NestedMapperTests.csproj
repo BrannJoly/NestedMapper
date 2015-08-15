@@ -68,6 +68,7 @@
     <Compile Include="DapperTests.cs" />
     <Compile Include="PerformanceTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="AvailableCastCheckerTests.cs" />
     <Compile Include="PropertyNameEnforcementTests.cs" />
   </ItemGroup>
   <ItemGroup>
