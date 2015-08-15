@@ -20,10 +20,21 @@ namespace NestedMapper
             List<Type> list;
             if (ImplicitNumericConversions.TryGetValue(from, out list))
             {
-                return list.Contains(to);
+                if (list.Contains(to))
+                    return true;
             }
 
-            return false;
+            if (to.IsEnum)
+            {
+                return CanCast(from, Enum.GetUnderlyingType(to));
+            }
+            if (Nullable.GetUnderlyingType(to) != null)
+
+            {
+                return CanCast(from, Nullable.GetUnderlyingType(to));
+            }
+
+                return false;
         }
 
         // https://msdn.microsoft.com/en-us/library/y5b434w4.aspx
