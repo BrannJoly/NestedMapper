@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data.SqlClient;
+using System.IO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NestedMapper;
 using NFluent;
@@ -8,14 +9,21 @@ using Dapper;
 
 namespace NestedMapperTests
 {
+
     [TestClass]
     public class DapperTests
     {
 
+        [ClassInitialize]
+        public static void SetUp(TestContext context)
+        {
+            AppDomain.CurrentDomain.SetData("DataDirectory", Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ""));
+        }
+
         public SqlConnection GetDatabaseConnection()
         {
 
-            var c = new SqlConnection("Data Source=.;Initial Catalog=tempdb;Integrated Security=True");
+            var c = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\datasource.mdf;Integrated Security=True;Connect Timeout=30");
             c.Open();
             return c;
 

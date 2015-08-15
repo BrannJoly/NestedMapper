@@ -47,7 +47,9 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <Choose>
     <When Condition="('$(VisualStudioVersion)' == '10.0' or '$(VisualStudioVersion)' == '') and '$(TargetFrameworkVersion)' == 'v3.5'">
@@ -62,6 +64,11 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="datasourceDataSet.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>datasourceDataSet.xsd</DependentUpon>
+    </Compile>
     <Compile Include="ExpressionTreeTest.cs" />
     <Compile Include="Foo.cs" />
     <Compile Include="MappingTest.cs" />
@@ -72,6 +79,17 @@
     <Compile Include="PropertyNameEnforcementTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="datasourceDataSet.xsc">
+      <DependentUpon>datasourceDataSet.xsd</DependentUpon>
+    </None>
+    <None Include="datasourceDataSet.xsd">
+      <Generator>MSDataSetGenerator</Generator>
+      <LastGenOutput>datasourceDataSet.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="datasourceDataSet.xss">
+      <DependentUpon>datasourceDataSet.xsd</DependentUpon>
+    </None>
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
@@ -81,6 +99,15 @@
       <Project>{18756c01-a6c6-48f3-b765-1372d8b38cf0}</Project>
       <Name>NestedMapper</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="datasource.mdf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="datasource_log.ldf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <DependentUpon>datasource.mdf</DependentUpon>
+    </Content>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
