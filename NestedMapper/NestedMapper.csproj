@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AvailableCastChecker.cs" />
     <Compile Include="ExpressionTreeUtils.cs" />
     <Compile Include="Mapper.cs" />
     <Compile Include="MapperFactory.cs" />

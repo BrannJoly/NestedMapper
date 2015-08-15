@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 
 namespace NestedMapper
 {
@@ -21,21 +23,24 @@ namespace NestedMapper
 
 
 
-        class TreeMapperController : PropertyBasicInfo
+        class TreeMapperController : MappingsGetter.PropertyBasicInfo
         {
             public bool StopMapping { get; set; }
 
+            public List<Mapping> mappings { get; } =  new List<Mapping>();
+
             public TreeMapperController(PropertyBasicInfo x) : base(x.Name, x.Type)
             {
-
+  
             }
         }
-
         public class Mapping
         {
             public List<string> TargetPath { get; set; }
             public string SourceProperty { get; set; }
             public Type PropertyType { get; set; }
+
+            
 
             public Mapping(List<string> targetPath, string sourceProperty, Type propertyType)
             {
@@ -44,17 +49,22 @@ namespace NestedMapper
                 PropertyType = propertyType;
 
             }
+
+            public override string ToString()
+            {
+                return string.Join(".", TargetPath) + " =(" + PropertyType + ") " + SourceProperty;
+            }
         }
 
-        private static List<PropertyBasicInfo> GetPropertyBasicInfos(object sampleSourceObject)
+        private static List<MappingsGetter.PropertyBasicInfo> GetPropertyBasicInfos(object sampleSourceObject)
         {
-            List<PropertyBasicInfo> props;
+            List<MappingsGetter.PropertyBasicInfo> props;
 
             if (sampleSourceObject is IDictionary<string, object>) // ie is dynamic
             {
                 var byName = (IDictionary<string, object>)sampleSourceObject;
 
-                props = byName.Select(x => new PropertyBasicInfo(x.Key, x.Value?.GetType())).ToList();
+                props = byName.Select(x => new MappingsGetter.PropertyBasicInfo(x.Key, x.Value?.GetType())).ToList();
 
             }
             else
@@ -62,21 +72,42 @@ namespace NestedMapper
                 props =
                     sampleSourceObject.GetType()
                         .GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance)
-                        .Select(prop => new PropertyBasicInfo(prop.Name, prop.PropertyType))
+                        .Select(prop => new MappingsGetter.PropertyBasicInfo(prop.Name, prop.PropertyType))
                         .ToList();
             }
             return props;
         }
 
-        public static List<Mapping> GetMappings<T>(MapperFactory.NamesMismatch namesMismatch, object sampleSourceObject) where T : new()
+        static InvalidOperationException GetException(string message, List<MappingsGetter.Mapping> mappings)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append(message);
+            sb.Append(Environment.NewLine);
+
+            if (mappings.Count > 0)
+            {
+                sb.Append("current mappings so far : ");
+                sb.Append(Environment.NewLine);
+            }
+
+            foreach (var m in mappings)
+            {
+                sb.Append(m);
+                sb.Append(Environment.NewLine);
+            }
+
+            return new InvalidOperationException(sb.ToString());
+        }
+
+        public static List<MappingsGetter.Mapping> GetMappings<T>(MapperFactory.NamesMismatch namesMismatch, object sampleSourceObject) where T : new()
         {
             var props = GetPropertyBasicInfos(sampleSourceObject);
 
-            var treeMapperController = new TreeMapperController(props[0]);
+            var treeMapperController = new MappingsGetter.TreeMapperController(props[0]);
 
             var x = TraverseObject(typeof (T), new Stack<string>(), treeMapperController, namesMismatch, true).GetEnumerator();
 
-            var mappings = new List<Mapping>();
+          
 
             foreach (var prop in props)
             {
@@ -85,27 +116,28 @@ namespace NestedMapper
 
                 if (!x.MoveNext())
                 {
-                    throw new InvalidOperationException("too many fields in the flat object");
+                    throw GetException("Too many fields in the flat object",treeMapperController.mappings);
                 }
 
                 var foundPropertyPath = x.Current;
 
-                mappings.Add(new Mapping(foundPropertyPath, prop.Name, prop.Type));
+                treeMapperController.mappings.Add(new MappingsGetter.Mapping(foundPropertyPath, prop.Name, prop.Type));
             }
 
             treeMapperController.StopMapping = true;
             x.MoveNext(); // will throw if we still have remaining fields now that StopMapping is true
-            return mappings;
+            return treeMapperController.mappings;
         }
 
-        private static IEnumerable<List<string>> TraverseObject(Type t, Stack<string> path, TreeMapperController seekedProperty, MapperFactory.NamesMismatch namesMismatch, bool topLevel)
+
+        private static IEnumerable<List<string>> TraverseObject(Type t, Stack<string> path, MappingsGetter.TreeMapperController treeMapperController, MapperFactory.NamesMismatch namesMismatch, bool topLevel)
         {
             var props = t.GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance);
 
             if (props.Length == 0)
             {
-                throw new InvalidOperationException("Type mismatch for property " + seekedProperty.Name);
-            }
+                throw GetException("Type mismatch for property", treeMapperController.mappings);
+             }
 
             foreach (var prop in props)
             {
@@ -114,14 +146,17 @@ namespace NestedMapper
                     continue;
                 }
 
-                if (seekedProperty.StopMapping)
+                if (treeMapperController.StopMapping)
                 {
-                    throw new InvalidOperationException("Not enough fields in the flat object");
+                    throw GetException("Not enough fields in the flat object", treeMapperController.mappings);
                 }
 
-                if (seekedProperty.Type == null || prop.PropertyType == seekedProperty.Type )
+                if (treeMapperController.Type == null 
+                    || prop.PropertyType == treeMapperController.Type 
+                    || AvailableCastChecker.CanCast(treeMapperController.Type, prop.PropertyType)
+                    )
                 {
-                    if (prop.Name == seekedProperty.Name
+                    if (prop.Name == treeMapperController.Name
                         || namesMismatch == MapperFactory.NamesMismatch.AlwaysAllow
                         || (namesMismatch == MapperFactory.NamesMismatch.AllowInNestedTypesOnly && !topLevel)
                         )
@@ -131,7 +166,7 @@ namespace NestedMapper
                     }
                     else
                     {
-                        throw new InvalidOperationException("Name mismatch for property " + prop.Name);
+                        throw GetException("Name mismatch for property " + prop.Name, treeMapperController.mappings);
 
                     }
 
@@ -140,7 +175,7 @@ namespace NestedMapper
                 {
                     path.Push(prop.Name);
 
-                    foreach (var r in TraverseObject(prop.PropertyType, path, seekedProperty, namesMismatch, false))
+                    foreach (var r in MappingsGetter.TraverseObject(prop.PropertyType, path, treeMapperController, namesMismatch, false))
                     {
                         yield return r;
                     }
