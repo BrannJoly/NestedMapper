@@ -122,7 +122,7 @@ namespace NestedMapper
 
             treeMapperController.StopMapping = true;
             x.MoveNext(); // will throw if we still have remaining fields now that StopMapping is true
-            return treeMapperController.Mappings;
+             return treeMapperController.Mappings;
         }
 
         private static bool ListContainsType(IEnumerable<Type> list, Type type)
