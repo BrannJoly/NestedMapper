@@ -223,6 +223,42 @@ namespace NestedMapperTests
 
         }
 
+        class NullableFoo
+        {
+            public int? I { get; set; }
+
+        }
+
+        [TestMethod]
+        public void Test_Mapping_null_To_Nullable_Types_Works()
+        {
+            dynamic flatFoo = new ExpandoObject();
+            flatFoo.IntProp = null;
+
+            var mapper = MapperFactory.GetMapper<NullableFoo>(flatFoo, MapperFactory.NamesMismatch.AlwaysAllow);
+
+            NullableFoo foo = mapper.Map(flatFoo);
+
+
+            Check.That(foo.I).IsNull();
+
+        }
+
+        [TestMethod]
+        public void Test_Mapping_To_Nullable_Types_Works()
+        {
+            dynamic flatFoo = new ExpandoObject();
+            flatFoo.IntProp = 1;
+
+            var mapper = MapperFactory.GetMapper<NullableFoo>(flatFoo, MapperFactory.NamesMismatch.AlwaysAllow);
+
+            NullableFoo foo = mapper.Map(flatFoo);
+
+
+            Check.That(foo.I).IsEqualTo(1);
+
+        }
+
 
     }
 }
