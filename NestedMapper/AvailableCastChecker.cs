@@ -13,7 +13,7 @@ namespace NestedMapper
             {
                 return true;
             }
-            if (HasImplicitConversion(from, from, to)|| HasImplicitConversion(to, from, to))
+            if (HasImplicitConversion(from, from, to) || HasImplicitConversion(to, from, to))
             {
                 return true;
             }
@@ -29,12 +29,11 @@ namespace NestedMapper
                 return CanCast(from, Enum.GetUnderlyingType(to));
             }
             if (Nullable.GetUnderlyingType(to) != null)
-
             {
                 return CanCast(from, Nullable.GetUnderlyingType(to));
             }
 
-                return false;
+            return false;
         }
 
         // https://msdn.microsoft.com/en-us/library/y5b434w4.aspx

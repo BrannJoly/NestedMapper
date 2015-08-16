@@ -40,7 +40,7 @@ namespace NestedMapper
 
         }
 
-        public static BinaryExpression CreateNestedSetFromDynamicProperty(List<string> targetPath, string sourcePropertyName,
+        public static Expression CreateNestedSetFromDynamicProperty(List<string> targetPath, string sourcePropertyName,
             ParameterExpression targetParameterExpression, ParameterExpression sourceParameterExpression)
         {
             // target.nested.targetPath
@@ -58,7 +58,23 @@ namespace NestedMapper
 
             //target.nested.targetPath = (type) source.sourceProperty;
             var assignExpression = Expression.Assign(propertyExpression, castedValueExpression);
-            return assignExpression;
+
+            //return assignExpression;
+
+            var exceptionConstructor = typeof (Exception).GetConstructor(new Type[] {typeof (string), typeof (Exception)});
+
+            var caughtexception = Expression.Parameter(typeof(Exception), "target");
+
+            var tryExpression = Expression.TryCatch(
+                Expression.Block(typeof(void),assignExpression),
+                Expression.Catch(caughtexception,
+                Expression.Throw(Expression.New(exceptionConstructor,
+                                                Expression.Constant("exception raised while assigning " + sourcePropertyName + " to " + string.Join(".", targetPath)), 
+                                                caughtexception))
+                 
+                ));
+
+            return tryExpression;
         }
 
 

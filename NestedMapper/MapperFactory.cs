@@ -64,7 +64,7 @@ namespace NestedMapper
 
         }
 
-        private static List<BinaryExpression> GetMappingExpressions(List<MappingsGetter.Mapping> mappings, ParameterExpression targetParameterExpression,
+        private static List<Expression> GetMappingExpressions(List<MappingsGetter.Mapping> mappings, ParameterExpression targetParameterExpression,
             ParameterExpression sourceParameterExpression)
         {
             var mappingActions =
