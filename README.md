@@ -32,7 +32,7 @@ var flatFoos = connection.Query("select Name, X, Y from tbFoo");
 var mapper = MapperFactory.GetMapper<Foo>(foos.First()); // can be done at init time and cached somewhere if needed
 
 var foos = flatFoos.select(x=> mapper(x));
-
+```
 
 
 ## How does this work ?
