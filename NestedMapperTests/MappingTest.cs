@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Dynamic;
-using System.Linq.Expressions;
-using System.Runtime.Remoting.Messaging;
-using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NestedMapper;
 using NFluent;
@@ -27,14 +24,14 @@ namespace NestedMapperTests
         [TestMethod]
         public void TestSimpleMappingScenario()
         {
-            var flatfoo = new FlatFoo()
+            var flatfoo = new FlatFoo
             {
                 I = 1,
                 A = DateTime.Today,
                 B = "B"
             };
 
-            Foo foo = MapperFactory.GetMapper<Foo>(flatfoo, MapperFactory.NamesMismatch.NeverAllow).Map(flatfoo);
+            Foo foo = MapperFactory.GetMapper<Foo>(flatfoo)(flatfoo);
 
             Check.That(foo.I).IsEqualTo(1);
             Check.That(foo.N.A).IsEqualTo(DateTime.Today);
@@ -52,7 +49,7 @@ namespace NestedMapperTests
             flatfoo.B = "N1B";
 
 
-            Foo foo = MapperFactory.GetMapper<Foo>(flatfoo, MapperFactory.NamesMismatch.NeverAllow).Map(flatfoo);
+            Foo foo = MapperFactory.GetMapper<Foo>(flatfoo, MapperFactory.NamesMismatch.NeverAllow)(flatfoo);
 
             Check.That(foo.I).IsEqualTo(1);
             Check.That(foo.N.A).IsEqualTo(DateTime.Today);
@@ -76,7 +73,7 @@ namespace NestedMapperTests
         [TestMethod]
         public void DontMapIfTooManyfields()
         {
-            var flatfoo = new FlatFooTooManyFields()
+            var flatfoo = new FlatFooTooManyFields
             {
                 I = 1,
                 A = DateTime.Today,
@@ -85,9 +82,9 @@ namespace NestedMapperTests
             };
 
             Check.ThatCode(
-                () => MapperFactory.GetMapper<Foo>(flatfoo, MapperFactory.NamesMismatch.NeverAllow).Map(flatfoo))
-                .Throws<InvalidOperationException>();
-            //.WithMessage("too many fields in the flat object");
+                () => MapperFactory.GetMapper<Foo>(flatfoo)(flatfoo))
+                .Throws<InvalidOperationException>()
+                .WithMessage("Too many fields in the flat object, don't know what to do with UnusedField");
 
         }
 
@@ -102,20 +99,17 @@ namespace NestedMapperTests
         [TestMethod]
         public void DontMapIfNotEnoughfields()
         {
-            var flatfoo = new FlatFooNotEnoughFields()
+            var flatfoo = new FlatFooNotEnoughFields
             {
                 I = 1,
-                A = DateTime.Today,
+                A = DateTime.Today
             };
 
             Check.ThatCode(
-                () => MapperFactory.GetMapper<Foo>(flatfoo, MapperFactory.NamesMismatch.NeverAllow).Map(flatfoo))
-                .Throws<InvalidOperationException>();
-//                .WithMessage(@"Not enough fields in the flat object
-//current mappings so far : 
-//I =(System.Int32) I
-//N.A =(System.DateTime) A
-//");
+                () => MapperFactory.GetMapper<Foo>(flatfoo)(flatfoo))
+                .Throws<InvalidOperationException>()
+                .WithMessage(@"Not enough fields in the flat object, don't know how to set B");
+
 
         }
 
@@ -131,7 +125,7 @@ namespace NestedMapperTests
         [TestMethod]
         public void DontMapIfTypesDontMatch()
         {
-            var flatfoo = new FlatFooWrongType()
+            var flatfoo = new FlatFooWrongType
             {
                 I = "WrongType",
                 A = 2,
@@ -139,9 +133,9 @@ namespace NestedMapperTests
             };
 
             Check.ThatCode(
-                () => MapperFactory.GetMapper<Foo>(flatfoo, MapperFactory.NamesMismatch.NeverAllow).Map(flatfoo))
-                .Throws<InvalidOperationException>();
-                //.WithMessage("Type mismatch for property I");
+                () => MapperFactory.GetMapper<Foo>(flatfoo)(flatfoo))
+                .Throws<InvalidOperationException>()
+                .WithMessage("Type mismatch for property I, was excepting a System.Int32 and got an System.String");
 
         }
 
@@ -167,8 +161,7 @@ namespace NestedMapperTests
             flatfoo.y = 200;
 
             FooPosition fooPosition =
-                MapperFactory.GetMapper<FooPosition>(flatfoo, MapperFactory.NamesMismatch.AllowInNestedTypesOnly)
-                    .Map(flatfoo);
+                MapperFactory.GetMapper<FooPosition>(flatfoo, MapperFactory.NamesMismatch.AllowInNestedTypesOnly)(flatfoo);
 
             Check.That(fooPosition.Name).IsEqualTo("Foo");
             Check.That(fooPosition.Position.X).IsEqualTo(45);
@@ -187,14 +180,12 @@ namespace NestedMapperTests
 
             var mapper = MapperFactory.GetMapper<Foo>(flatFooSource, MapperFactory.NamesMismatch.NeverAllow, new List<Type> {typeof(NestedType) });
 
-
-
             dynamic flatFoo = new ExpandoObject();
             flatFoo.I = 1;
             flatFoo.A = DateTime.Today;
             flatFoo.B = "N1B";
 
-            Foo foo = mapper.Map(flatFoo);
+            Foo foo = mapper(flatFoo);
 
             Check.That(foo.I).IsEqualTo(1);
             Check.That(foo.N.A).IsEqualTo(DateTime.Today);
@@ -216,7 +207,7 @@ namespace NestedMapperTests
 
             var mapper = MapperFactory.GetMapper<ImplicitCastTestTarget>(flatFoo, MapperFactory.NamesMismatch.AlwaysAllow);
 
-            ImplicitCastTestTarget foo = mapper.Map(flatFoo);
+            ImplicitCastTestTarget foo = mapper(flatFoo);
 
 
             Check.That(foo.TargetDecimalProp).IsEqualTo(1m);
@@ -237,7 +228,7 @@ namespace NestedMapperTests
 
             var mapper = MapperFactory.GetMapper<NullableFoo>(flatFoo, MapperFactory.NamesMismatch.AlwaysAllow);
 
-            NullableFoo foo = mapper.Map(flatFoo);
+            NullableFoo foo = mapper(flatFoo);
 
 
             Check.That(foo.I).IsNull();
@@ -252,7 +243,7 @@ namespace NestedMapperTests
 
             var mapper = MapperFactory.GetMapper<NullableFoo>(flatFoo, MapperFactory.NamesMismatch.AlwaysAllow);
 
-            NullableFoo foo = mapper.Map(flatFoo);
+            NullableFoo foo = mapper(flatFoo);
 
 
             Check.That(foo.I).IsEqualTo(1);

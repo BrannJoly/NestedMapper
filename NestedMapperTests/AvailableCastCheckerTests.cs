@@ -14,9 +14,9 @@ namespace NestedMapperTests
             Check.That(AvailableCastChecker.CanCast(typeof (int), typeof (decimal))).IsTrue();
         }
 
-        enum Test
+        public enum Test
         {
-            a
+           A
         }
 
         [TestMethod]

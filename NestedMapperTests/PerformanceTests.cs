@@ -1,60 +1,93 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Dynamic;
+using System.Linq.Expressions;
+using System.Reflection;
+using System.Reflection.Emit;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NestedMapper;
 using NFluent;
-using System.Diagnostics;
 
 namespace NestedMapperTests
 {
     [TestClass]
     public class PerformanceTests
     {
-        private int PerformanceMapTest(int iterations, IMapper<Foo> mapper, dynamic source)
+        private static void TestNestedMapperGeneratedCode(int iterations, Func<dynamic,Foo> mapper, dynamic source)
         {
-            var dontinline = 0;
             for (var i = 0; i < iterations; i++)
             {
-                var foo = mapper.Map(source);
-                dontinline += foo.I;
+                var foo = PerformNestedMapperMapping(mapper, source);
+                GC.KeepAlive(foo);
             }
-            return dontinline;
         }
 
+        private static dynamic PerformNestedMapperMapping(Func<dynamic, Foo> mapper, dynamic source)
+        {
+            var foo = mapper(source);
+            return foo;
+        }
+
+
+        private static void SaveLambda(LambdaExpression lambda)
+        {
+            var asm = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName("test"),AssemblyBuilderAccess.Save);
+            var type = asm.DefineDynamicModule("myModule", "test.dll").DefineType("myType");
+            var builder = type.DefineMethod("Foo", MethodAttributes.Public | MethodAttributes.Static);
+            lambda.CompileToMethod(builder);
+            type.CreateType();
+            asm.Save("test.dll");
+        }
+
+        private int _acceptedSlownessFactor = 2;
+        private int _iterations= 100000;
         [TestMethod]
-        public void NestedMapperHasTheSameOrderOfMagnitudeThanNativeMapper()
+        public void NestedMapper_Isnt_Significantly_Slower_Than_Native_Code()
         {
             dynamic flatfoo = new ExpandoObject();
             flatfoo.I = 1;
             flatfoo.A = DateTime.Today;
             flatfoo.B = "N1B";
 
-            const int iterations = 100000;
-
-
             var sw = new Stopwatch();
             sw.Start();
 
-            for (var i = 0; i < iterations; i++)
-            {
-                var foo = new Foo
-                {
-                    I = flatfoo.I,
-                    N =
-                    {
-                        A = flatfoo.A,
-                        B = flatfoo.B
-                    }
-                };
-                GC.KeepAlive(foo);
-            }
+            TestNativeCode(_iterations, flatfoo);
 
             sw.Stop();
 
-            var mapper = MapperFactory.GetMapper<Foo>(flatfoo, MapperFactory.NamesMismatch.NeverAllow);
+            var lambda = MapperFactory.GetMapperExpression<Foo>(flatfoo, MapperFactory.NamesMismatch.NeverAllow, new List<Type>());
 
-            Check.ThatCode(() => PerformanceMapTest(iterations, mapper, flatfoo))
-                .LastsLessThan(5*sw.ElapsedMilliseconds, TimeUnit.Milliseconds);
+            //SaveLambda(lambda);
+
+            var mapper = lambda.Compile();
+
+            Check.ThatCode(() => TestNestedMapperGeneratedCode(_iterations, mapper, flatfoo))
+                .LastsLessThan(_acceptedSlownessFactor * sw.ElapsedMilliseconds, TimeUnit.Milliseconds);
+        }
+
+        private static void TestNativeCode(int iterations, dynamic flatfoo)
+        {
+            for (var i = 0; i < iterations; i++)
+            {
+                var foo = PerformNativeMapping(flatfoo);
+                GC.KeepAlive(foo);
+            }
+        }
+
+        private static Foo PerformNativeMapping(dynamic flatfoo)
+        {
+            var foo = new Foo
+            {
+                I = flatfoo.I,
+                N =
+                {
+                    A = flatfoo.A,
+                    B = flatfoo.B
+                }
+            };
+            return foo;
         }
     }
 }

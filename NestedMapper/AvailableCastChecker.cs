@@ -37,7 +37,7 @@ namespace NestedMapper
         }
 
         // https://msdn.microsoft.com/en-us/library/y5b434w4.aspx
-        static Dictionary<Type,List<Type>> ImplicitNumericConversions = new Dictionary<Type, List<Type>>();
+        static readonly Dictionary<Type,List<Type>> ImplicitNumericConversions = new Dictionary<Type, List<Type>>();
 
         static AvailableCastChecker()
         {
@@ -62,7 +62,7 @@ namespace NestedMapper
                     ParameterInfo pi = mi.GetParameters().FirstOrDefault();
                     return pi != null && pi.ParameterType == baseType;
                 });
-                
+
         }
     }
 }

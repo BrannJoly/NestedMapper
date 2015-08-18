@@ -15,65 +15,33 @@ namespace NestedMapper
             NeverAllow
         }
 
-        public static IMapper<T> GetMapper<T>(object sampleSourceObject, NamesMismatch namesMismatch= NamesMismatch.NeverAllow, IEnumerable<Type> assumeNullWontBeMappedToThoseTypes= null) where T : new()
+        public static Func<dynamic,T> GetMapper<T>(object sampleSourceObject,
+            NamesMismatch namesMismatch = NamesMismatch.AllowInNestedTypesOnly,
+            IEnumerable<Type> assumeNullWontBeMappedToThoseTypes = null) where T : new()
+        {
+            var lambda = GetMapperExpression<T>(sampleSourceObject, namesMismatch, assumeNullWontBeMappedToThoseTypes);
+
+            var compiled = lambda.Compile();
+            return compiled;
+
+        }
+
+        public static Expression<Func<dynamic,T>> GetMapperExpression<T>(object sampleSourceObject, NamesMismatch namesMismatch,
+            IEnumerable<Type> assumeNullWontBeMappedToThoseTypes) where T : new()
         {
             if (assumeNullWontBeMappedToThoseTypes == null)
                 assumeNullWontBeMappedToThoseTypes = new List<Type>();
-            var mappings = MappingsGetter.GetMappings<T>(sampleSourceObject, namesMismatch, assumeNullWontBeMappedToThoseTypes);
 
-            var constructorActions = GetConstructorActions<T>(mappings);
-
-            return new Mapper<T>(GetMappingLambda<T>(mappings).Compile(), constructorActions);
-        }
-
-        private static List<Expression<Action<T>>> GetConstructorActions<T>(List<MappingsGetter.Mapping> mappings) where T : new()
-        {
-            var constructorActions =
-                mappings.Select(m => m.TargetPath.Take(m.TargetPath.Count - 1))
-                    .Select(path=>string.Join(".", path))
-                    .Distinct() //get all the distinct paths we assign to
-                    .Where(path => !string.IsNullOrEmpty(path)) //ignore top level constructors
-                    .Select(path=> path.Split('.'))
-                    .Select(ExpressionTreeUtils.CreateNestedSetConstructorLambda<T>)
-                    .Where(a => a != null)
-                    // if there's no default constructor, we'll ignore this action and hope the object is initialized properly by its parent. If it's not, we'll get a runtime error.
-                    .ToList();
-            return constructorActions;
-        }
-
-        private static Expression<Action<T, dynamic>> GetMappingLambda<T>(List<MappingsGetter.Mapping> mappings) where T : new()
-        {
-            // target
-            var targetParameterExpression = Expression.Parameter(typeof(T), "target");
+            var tree = MappingsGetter.GetMappingsTree<T>(sampleSourceObject, namesMismatch,
+                assumeNullWontBeMappedToThoseTypes.ToList());
 
             // source
-            var sourceParameterExpression = Expression.Parameter(typeof(object), "source");
+            var sourceParameterExpression = Expression.Parameter(typeof (object), "source");
 
-            var expressions = new List<Expression> {sourceParameterExpression, targetParameterExpression};
 
-            var mappingActions = GetMappingExpressions(mappings, targetParameterExpression, sourceParameterExpression);
-            expressions.AddRange(mappingActions);
-
-            var block = Expression.Block(expressions);
-
-            // (target, value) => target.nested.targetPath = (type) source.sourceProperty;
-            var assign = Expression.Lambda<Action<T, dynamic>>(block, targetParameterExpression,
+            var lambda = Expression.Lambda<Func<dynamic, T>>(tree.GetExpression(sourceParameterExpression, namesMismatch),
                 sourceParameterExpression);
-
-            return assign;
-
+            return lambda;
         }
-
-        private static List<Expression> GetMappingExpressions(List<MappingsGetter.Mapping> mappings, ParameterExpression targetParameterExpression,
-            ParameterExpression sourceParameterExpression)
-        {
-            var mappingActions =
-                mappings.Select(
-                    mapping =>
-                        ExpressionTreeUtils.CreateNestedSetFromDynamicProperty(mapping.TargetPath,
-                            mapping.SourceProperty, targetParameterExpression, sourceParameterExpression)).ToList();
-            return mappingActions;
-        }
-
     }
 }

@@ -67,7 +67,7 @@ namespace NestedMapperTests
             flatfoo.N1B = "N1B";
             flatfoo.N2A = DateTime.Today;
             flatfoo.N2B = "N2B";
-            FooMultipleNested foo = MapperFactory.GetMapper<FooMultipleNested>(flatfoo, MapperFactory.NamesMismatch.AlwaysAllow).Map(flatfoo);
+            FooMultipleNested foo = MapperFactory.GetMapper<FooMultipleNested>(flatfoo, MapperFactory.NamesMismatch.AlwaysAllow)(flatfoo);
 
             Check.That(foo.I).IsEqualTo(1);
             Check.That(foo.N1.A).IsEqualTo(DateTime.Today);
@@ -86,7 +86,7 @@ namespace NestedMapperTests
             flatfoo.N1B = "N1B";
             flatfoo.N2A = DateTime.Today;
             flatfoo.N2B = "N2B";
-            FooMultipleNested foo = MapperFactory.GetMapper<FooMultipleNested>(flatfoo, MapperFactory.NamesMismatch.AllowInNestedTypesOnly).Map(flatfoo);
+            FooMultipleNested foo = MapperFactory.GetMapper<FooMultipleNested>(flatfoo, MapperFactory.NamesMismatch.AllowInNestedTypesOnly)(flatfoo);
 
             Check.That(foo.I).IsEqualTo(1);
             Check.That(foo.N1.A).IsEqualTo(DateTime.Today);

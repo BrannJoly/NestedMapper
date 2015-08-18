@@ -69,7 +69,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>datasourceDataSet.xsd</DependentUpon>
     </Compile>
-    <Compile Include="ExpressionTreeTest.cs" />
     <Compile Include="Foo.cs" />
     <Compile Include="MappingTest.cs" />
     <Compile Include="DapperTests.cs" />

@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Data.SqlClient;
 using System.IO;
+using System.Linq;
+using Dapper;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NestedMapper;
 using NFluent;
-using System.Linq;
-using Dapper;
 
 namespace NestedMapperTests
 {
@@ -37,7 +37,7 @@ namespace NestedMapperTests
 
             var flatfoo = connection.Query("select 1 as I, cast ('" + DateTime.Today.ToString("yyyyMMdd") + "' as date) A, 'N1B' as B").Single();
 
-            Foo foo = MapperFactory.GetMapper<Foo>(flatfoo, MapperFactory.NamesMismatch.NeverAllow).Map(flatfoo);
+            Foo foo = MapperFactory.GetMapper<Foo>(flatfoo, MapperFactory.NamesMismatch.NeverAllow)(flatfoo);
 
 
             Check.That(foo.I).IsEqualTo(1);
