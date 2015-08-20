@@ -85,7 +85,7 @@ namespace NestedMapper
         {
             var props = new Queue<PropertyBasicInfo>(GetPropertyBasicInfos(sampleSourceObject));
 
-            var tree = BuildTree(typeof(T), String.Empty, props, namesMismatch, assumeNullWontBeMappedToThoseTypes);
+            var tree = BuildTree(typeof(T), string.Empty, props, namesMismatch, assumeNullWontBeMappedToThoseTypes);
 
             if (props.Count != 0)
             {

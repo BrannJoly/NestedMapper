@@ -214,7 +214,7 @@ namespace NestedMapperTests
 
         }
 
-        class NullableFoo
+        public class NullableFoo
         {
             public int? I { get; set; }
 
