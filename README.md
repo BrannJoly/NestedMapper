@@ -4,17 +4,17 @@
 
 If you're using some sort of light ORM (eg. Dapper) and if your data is flat in your database and hierarchical in your .net application, chances are you're either doing your mapping manually, or are using AutoMapper.
 
-NestedMapper will take a sample object, your .net type, and turn that into a Func<dynamic,T> you can use to quickly transform one into the other.
+NestedMapper will take a sample object, your .net type, and turn that into a Func < dynamic , T > you can use to quickly transform one into the other.
 
 Unlike AutoMapper, you won't have to maintain a mapping configuration; just give NestedMapper the .net type and a sample flat object, and it will return a lambda you can use immediately.
 
 ## Features
 
 - can deal with any type of flat object, including DapperRows, classic ExpandoObjects, and user-defined .net types
-- will manage to map a variety of fields even if the types don't trivially match (nullable types, enums, implicit converstions...)
-- unlimited levels of nesting supported (eventhough you'll rarely use more than one)
+- will manage to map a variety of fields even if the types don't trivially match (nullable types, enums, implicit conversions...)
+- unlimited levels of nesting supported (even though you'll rarely use more than one)
 - native-like performance thanks to Expression Trees
-- Helpfull error messages when mapping fails.
+- helpful error messages when mapping fails.
 - explicit-constructor aware (no need to have a default empty constructor)
 - uses default constructor/object initializers if available
 
@@ -35,22 +35,25 @@ var foos = flatFoos.select(x=> mapper(x));
 ```
 
 
-## How does this work ?
+## How does this work?
 
-The mapper will turn your target type into a tree and travel it. It then builds a big ExpressionTree matching the tree stucture, compiles it and returns it. No magic involved!
+The mapper will turn your target type into a tree and travel it. It then builds a big ExpressionTree matching the tree structure, compiles it and returns it. No magic involved!
 
 In an ideal world, we would iterate over the entry types, and make sure we find all of them in the correct order while recursively traveling the target type hierarchy.
 In practice, there are a couple of non-trivial issues that can arise:
 
 ### Type conversion gotchas
 
-Maybe the types don't exactly match (ie Int -> Enum, of Int -> Int? or Int -> Decimal. Figuring out whether two types are compatible can be quite nasty.
-NestedMapper supports the most common scenarios. If you stumble unto something that's not supported (eg array covariance), let me know and I'll try to implement it.
+More often than not, your types won't exactly match. Typically, your database will contain an int and your code an Enum, or a nullable int. Or maybe there's an implicit conversion to apply (that's typically the case when you use a tool like stidgen)
+
+Figuring out whether two types are compatible can be quite nasty, and NestedMapper supports the most common scenarios. 
+If you stumble unto something that's not supported (eg array covariance), let me know and I'll try to implement it.
 
 ### null columns in the sample data
-The sample object can be a dynamic containing nulls. In that case, we have no idea what the type is. 
+
+The sample object can be a dynamic containing nulls. In that case, the mapper has no idea what the type is. 
 Let's say we've travelled to a Point in our target .net type. Is the source object going to contain a Point (in which case we should keep travelling horizontally), or is it going to contain an int (in which case we should recurse into the Point and set its x property). 
-There's are two ways to adress this:
+There's are two ways to address this:
 - try both options and see if one of them yields a correct mapping function
 - provide additional information to the mapper.
 
