@@ -44,10 +44,15 @@
     <Compile Include="AvailableCastChecker.cs" />
     <Compile Include="MapperFactory.cs" />
     <Compile Include="MappingsGetter.cs" />
+    <Compile Include="MappingTreeBuilder.cs" />
+    <Compile Include="Node.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PropertyBasicInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="NestedMapper.nuspec" />
+    <None Include="NestedMapper.nuspec">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

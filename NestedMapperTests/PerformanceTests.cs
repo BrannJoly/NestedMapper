@@ -57,11 +57,9 @@ namespace NestedMapperTests
 
             sw.Stop();
 
-            var lambda = MapperFactory.GetMapperExpression<Foo>(flatfoo, MapperFactory.NamesMismatch.NeverAllow, new List<Type>());
+            var mapper = MapperFactory.GetBidirectionalMapper<Foo>(flatfoo, MapperFactory.NamesMismatch.NeverAllow, new List<Type>());
 
             //SaveLambda(lambda);
-
-            var mapper = lambda.Compile();
 
             Check.ThatCode(() => TestNestedMapperGeneratedCode(_iterations, mapper, flatfoo))
                 .LastsLessThan(_acceptedSlownessFactor * sw.ElapsedMilliseconds, TimeUnit.Milliseconds);
