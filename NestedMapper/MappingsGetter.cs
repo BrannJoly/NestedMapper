@@ -1,38 +1,14 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("NestedMapperTests")]
 
 namespace NestedMapper
 {
-    class MappingsGetter
+    internal class MappingsGetter
     {
-        public class Mapping
+        public static List<Mapping> GetMappings(Node tree)
         {
-            public List<string> TargetPath { get; set; }
-            public string SourceProperty { get; set; }
-            public Type PropertyType { get; set; }
-
-
-
-            public Mapping(List<string> targetPath, string sourceProperty, Type propertyType)
-            {
-                TargetPath = targetPath;
-                SourceProperty = sourceProperty;
-                PropertyType = propertyType;
-
-            }
-
-            public override string ToString()
-            {
-                return string.Join(".", TargetPath) + " =(" + PropertyType + ") " + SourceProperty;
-            }
-        }
-
-        public static List<Mapping> GetMappings<T>(object sampleSourceObject, MapperFactory.NamesMismatch namesMismatch,
-           List<Type> assumeNullWontBeMappedToThoseTypes) where T : new()
-        {
-            var tree = MapperFactory.GetMappingsTree<T>(sampleSourceObject, namesMismatch, assumeNullWontBeMappedToThoseTypes);
 
             var mappings = new List<Mapping>();
 

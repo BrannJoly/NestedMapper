@@ -18,22 +18,31 @@ namespace NestedMapper
             return false;
         }
 
-        public static Node BuildTree(Type t, string name, Queue<PropertyBasicInfo> sourceObjectProperties, MapperFactory.NamesMismatch namesMismatch, List<Type> assumeNullWontBeMappedToThoseTypes)
+        public static Node BuildTree(Type t, string name, Queue<PropertyBasicInfo> sourceObjectProperties, MapperFactory.NamesMismatch namesMismatch,
+            List<Type> assumeNullWontBeMappedToThoseTypes, List<string> ignoredFields )
         {
             var props =
-                t.GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance)
+                t.GetProperties( BindingFlags.Public | BindingFlags.Instance)
                     .Where(x => x.GetSetMethod() != null);
 
 
             var nodes = new List<Node>();
             foreach (var prop in props)
             {
+                if (ignoredFields.Contains(prop.Name))
+                {
+                    nodes.Add(new Node(prop.PropertyType, prop.Name));
+                    continue;
+                }
+
                 if (sourceObjectProperties.Count == 0)
                 {
                     throw new InvalidOperationException("Not enough fields in the flat object, don't know how to set " + prop.Name);
                 }
 
                 var propToMap = sourceObjectProperties.Peek();
+
+
                 if ((propToMap.Type == null && !ListContainsType(assumeNullWontBeMappedToThoseTypes, prop.PropertyType))
                     || (propToMap.Type != null && AvailableCastChecker.CanCast(propToMap.Type, prop.PropertyType))
                     )
@@ -50,7 +59,7 @@ namespace NestedMapper
 
                     }
                 }
-                else if (prop.PropertyType.GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance).All(x => x.GetSetMethod() == null))
+                else if (prop.PropertyType.GetProperties(BindingFlags.Public | BindingFlags.Instance).All(x => x.GetSetMethod() == null))
                 {
                     // no sense recursing on this
                     throw new InvalidOperationException(
@@ -58,7 +67,7 @@ namespace NestedMapper
                 }
                 else
                 {
-                    nodes.Add(BuildTree(prop.PropertyType,prop.Name, sourceObjectProperties, namesMismatch== MapperFactory.NamesMismatch.AllowInNestedTypesOnly? MapperFactory.NamesMismatch.AlwaysAllow:namesMismatch, assumeNullWontBeMappedToThoseTypes));
+                    nodes.Add(BuildTree(prop.PropertyType,prop.Name, sourceObjectProperties, namesMismatch== MapperFactory.NamesMismatch.AllowInNestedTypesOnly? MapperFactory.NamesMismatch.AlwaysAllow:namesMismatch, assumeNullWontBeMappedToThoseTypes, ignoredFields));
                 }
             }
 

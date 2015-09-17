@@ -69,7 +69,9 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>datasourceDataSet.xsd</DependentUpon>
     </Compile>
+    <Compile Include="DictionaryGenerationTests.cs" />
     <Compile Include="Foo.cs" />
+    <Compile Include="IgnoredFieldsTests.cs" />
     <Compile Include="MappingTest.cs" />
     <Compile Include="DapperTests.cs" />
     <Compile Include="PerformanceTests.cs" />

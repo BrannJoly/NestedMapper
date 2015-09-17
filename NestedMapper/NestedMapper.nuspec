@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>$id$</id>
-    <version>0.3.0.0</version>
+    <version>0.4.0.0</version>
     <title>NestedMapper</title>
     <authors>Brann Joly</authors>
     <owners>BrannJoly</owners>
@@ -10,7 +10,7 @@
     <projectUrl>https://github.com/BrannJoly/NestedMapper</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>a library which lets you map flat objects to nested objects containing the same data</description>
-    <releaseNotes>Initial Version</releaseNotes>
+    <releaseNotes>Bidirectional mapping & ignored fields</releaseNotes>
     <copyright>Copyright 2015</copyright>
     <tags>Mapping</tags>
   </metadata>

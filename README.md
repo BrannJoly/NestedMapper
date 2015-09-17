@@ -4,7 +4,7 @@
 
 If you're using some sort of light ORM (eg. Dapper) and if your data is flat in your database and hierarchical in your .net application, chances are you're either doing your mapping manually, or are using AutoMapper.
 
-NestedMapper will take a sample object, your .net type, and turn that into a Func < dynamic , T > you can use to quickly transform one into the other.
+NestedMapper will take a sample object, your .net type, and turn that into a Func<dynamic, T> you can use to quickly transform one into the other.
 
 Unlike AutoMapper, you won't have to maintain a mapping configuration; just give NestedMapper the .net type and a sample flat object, and it will return a lambda you can use immediately.
 
@@ -17,6 +17,7 @@ Unlike AutoMapper, you won't have to maintain a mapping configuration; just give
 - helpful error messages when mapping fails.
 - explicit-constructor aware (no need to have a default empty constructor)
 - uses default constructor/object initializers if available
+- bidirectional mapping (ie you can also use the mapper to generate a dynamic flat object, and possibly save it back to a database)
 
 ## Sample code
 

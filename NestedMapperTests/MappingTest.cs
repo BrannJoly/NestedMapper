@@ -58,6 +58,7 @@ namespace NestedMapperTests
         }
 
 
+    
 
 
         public class FlatFooTooManyFields
@@ -161,7 +162,8 @@ namespace NestedMapperTests
             flatfoo.y = 200;
 
             FooPosition fooPosition =
-                MapperFactory.GetMapper<FooPosition>(flatfoo, MapperFactory.NamesMismatch.AllowInNestedTypesOnly)(flatfoo);
+                MapperFactory.GetMapper<FooPosition>(flatfoo, MapperFactory.NamesMismatch.AllowInNestedTypesOnly)(
+                    flatfoo);
 
             Check.That(fooPosition.Name).IsEqualTo("Foo");
             Check.That(fooPosition.Position.X).IsEqualTo(45);
@@ -178,7 +180,8 @@ namespace NestedMapperTests
             flatFooSource.A = null;
             flatFooSource.B = "N1B";
 
-            var mapper = MapperFactory.GetMapper<Foo>(flatFooSource, MapperFactory.NamesMismatch.NeverAllow, new List<Type> {typeof(NestedType) });
+            var mapper = MapperFactory.GetMapper<Foo>(flatFooSource, MapperFactory.NamesMismatch.NeverAllow,
+                new List<Type> {typeof (NestedType)});
 
             dynamic flatFoo = new ExpandoObject();
             flatFoo.I = 1;
@@ -205,7 +208,8 @@ namespace NestedMapperTests
             dynamic flatFoo = new ExpandoObject();
             flatFoo.IntProp = 1;
 
-            var mapper = MapperFactory.GetMapper<ImplicitCastTestTarget>(flatFoo, MapperFactory.NamesMismatch.AlwaysAllow);
+            var mapper = MapperFactory.GetMapper<ImplicitCastTestTarget>(flatFoo,
+                MapperFactory.NamesMismatch.AlwaysAllow);
 
             ImplicitCastTestTarget foo = mapper(flatFoo);
 

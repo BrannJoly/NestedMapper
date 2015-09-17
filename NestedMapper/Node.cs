@@ -14,9 +14,12 @@ namespace NestedMapper
 
         public string TargetName { get; }
 
+   
+
         public string SourcePropertyName { get; }
         public List<Node> Nodes { get; }
 
+        //will be set with a field directly
         public Node(Type tartgetType, string targetName, string sourcePropertyName)
         {
             TargetType = tartgetType;
@@ -24,12 +27,22 @@ namespace NestedMapper
             SourcePropertyName = sourcePropertyName;
         }
 
+        //will be set via a recursive call
         public Node(Type tartgetType, string targetName, List<Node> nodes)
         {
             TargetType = tartgetType;
             TargetName = targetName;
             Nodes = nodes;
         }
+
+        //will be set to null (ignored fields)
+        public Node(Type tartgetType, string targetName)
+        {
+            TargetType = tartgetType;
+            TargetName = targetName;
+        }
+
+
 
         /// <summary>
         /// gets an expression tree which recursively call the constructors of this node subNodes to build an object
@@ -42,41 +55,56 @@ namespace NestedMapper
             var namesMismatchSubtypes = namesMismatch == MapperFactory.NamesMismatch.AllowInNestedTypesOnly
                 ? MapperFactory.NamesMismatch.AlwaysAllow
                 : namesMismatch;
+
+
             if (SourcePropertyName != null)
             {
                 return GetCastedValue(sourceParameter);
             }
-            // does a default constructor exist?
-            var defaultConstructor = TargetType.GetConstructor(Type.EmptyTypes);
-
-            if (defaultConstructor != null)
+            else if (Nodes != null)
             {
-                // new object();
-                var newObjectExpression = Expression.New(defaultConstructor);
 
-                var objectInitializerBindings =
-                    Nodes.Select(
-                        childNode =>
-                            Expression.Bind(TargetType.GetProperty(childNode.TargetName),
-                                childNode.GetExpression(sourceParameter, namesMismatchSubtypes))).Cast<MemberBinding>().ToList();
+                // does a default constructor exist?
+                var defaultConstructor = TargetType.GetConstructor(Type.EmptyTypes);
 
-
-                var creationExpression = Expression.MemberInit(newObjectExpression, objectInitializerBindings);
-
-                // (type)new object();
-                return Expression.Convert(creationExpression, TargetType);
-            }
-            else // let's see if there's a suitable non-default constructor
-            {
-                var constructor = FindConstructor(TargetType,Nodes.Select(x => new PropertyBasicInfo(x.TargetName, x.TargetType)).ToList(),true);
-
-                if (constructor == null)
+                if (defaultConstructor != null)
                 {
-                    throw new InvalidOperationException("counldn't find a proper constructor to initialize " + TargetType);
-                }
-                var creationExpression = Expression.New(constructor, Nodes.Select(x => x.GetExpression(sourceParameter, namesMismatchSubtypes)));
-                return Expression.Convert(creationExpression, TargetType);
+                    // new object();
+                    var newObjectExpression = Expression.New(defaultConstructor);
 
+                    var objectInitializerBindings =
+                        Nodes.Select(
+                            childNode =>
+                                Expression.Bind(TargetType.GetProperty(childNode.TargetName),
+                                    childNode.GetExpression(sourceParameter, namesMismatchSubtypes)))
+                            .Cast<MemberBinding>()
+                            .ToList();
+
+
+                    var creationExpression = Expression.MemberInit(newObjectExpression, objectInitializerBindings);
+
+                    // (type)new object();
+                    return Expression.Convert(creationExpression, TargetType);
+                }
+                else // let's see if there's a suitable non-default constructor
+                {
+                    var constructor = FindConstructor(TargetType,
+                        Nodes.Select(x => new PropertyBasicInfo(x.TargetName, x.TargetType)).ToList(), true);
+
+                    if (constructor == null)
+                    {
+                        throw new InvalidOperationException("counldn't find a proper constructor to initialize " +
+                                                            TargetType);
+                    }
+                    var creationExpression = Expression.New(constructor,
+                        Nodes.Select(x => x.GetExpression(sourceParameter, namesMismatchSubtypes)));
+                    return Expression.Convert(creationExpression, TargetType);
+
+                }
+            }
+            else // ignored field, set to null
+            {
+                return Expression.Convert(Expression.Constant(null), TargetType);
             }
         }
 

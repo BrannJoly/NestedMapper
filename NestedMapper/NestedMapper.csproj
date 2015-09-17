@@ -42,9 +42,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AvailableCastChecker.cs" />
+    <Compile Include="BidirectionalMapper.cs" />
     <Compile Include="MapperFactory.cs" />
+    <Compile Include="Mapping.cs" />
     <Compile Include="MappingsGetter.cs" />
     <Compile Include="MappingTreeBuilder.cs" />
+    <Compile Include="NestedToFlat.cs" />
     <Compile Include="Node.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PropertyBasicInfo.cs" />

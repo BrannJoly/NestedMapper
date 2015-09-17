@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("NestedMapperTests")]
 
 namespace NestedMapper
 {
@@ -16,51 +19,38 @@ namespace NestedMapper
             NeverAllow
         }
 
-        public class BidirectionalMapper<T>
-        {
-            public BidirectionalMapper(Func<dynamic, T> toNested, Func<T, object> toFlat)
-            {
-                ToNested = toNested;
-                ToFlat = toFlat;
-            }
-
-            public Func<dynamic, T> ToNested { get; }
-
-            public Func<T, object> ToFlat { get; }
-        }
-
 
         public static Func<dynamic,T> GetMapper<T>(object sampleSourceObject,
             NamesMismatch namesMismatch = NamesMismatch.AllowInNestedTypesOnly,
-            IEnumerable<Type> assumeNullWontBeMappedToThoseTypes = null) where T : new()
+            IEnumerable<Type> assumeNullWontBeMappedToThoseTypes = null, IEnumerable<string> ignoredFields=null ) where T : new()
         {
-            var bidirectionalMapper = GetBidirectionalMapper<T>(sampleSourceObject, namesMismatch, assumeNullWontBeMappedToThoseTypes);
+            var bidirectionalMapper = GetBidirectionalMapper<T>(sampleSourceObject, namesMismatch, assumeNullWontBeMappedToThoseTypes, ignoredFields);
 
             return bidirectionalMapper.ToNested;
 
         }
 
-        public static BidirectionalMapper<T> GetBidirectionalMapper<T>(object sampleSourceObject, NamesMismatch namesMismatch,
-            IEnumerable<Type> assumeNullWontBeMappedToThoseTypes) where T : new()
+        public static BidirectionalMapper<T> GetBidirectionalMapper<T>(object sampleSourceObject, NamesMismatch namesMismatch = NamesMismatch.AllowInNestedTypesOnly,
+            IEnumerable<Type> assumeNullWontBeMappedToThoseTypes=null, IEnumerable<string> ignoredFields = null) where T : new()
         {
             if (assumeNullWontBeMappedToThoseTypes == null)
                 assumeNullWontBeMappedToThoseTypes = new List<Type>();
 
-            var tree = GetMappingsTree<T>(sampleSourceObject, namesMismatch, assumeNullWontBeMappedToThoseTypes.ToList());
+            if (ignoredFields == null)
+                ignoredFields = new List<string>();
+
+
+            var tree = GetMappingsTree<T>(sampleSourceObject, namesMismatch, assumeNullWontBeMappedToThoseTypes.ToList(), ignoredFields.ToList());
 
             var flatToNested = GetFlatToNestedLambda<T>(namesMismatch, tree);
 
-            var nestedToFlat = GetNestedToFlatLambda<T>(tree);
+            var mappings = MappingsGetter.GetMappings(tree);
 
-            return new BidirectionalMapper<T>(flatToNested, nestedToFlat);
+            var nestedToFlat = NestedToFlatBuilder.UpdateDictionary<T>(tree, mappings);
 
+            return new BidirectionalMapper<T>(flatToNested, nestedToFlat, mappings);
         }
 
-        private static Func<T, object> GetNestedToFlatLambda<T>(Node tree)
-        {
-            
-            return null;
-        }
 
         private static Func<dynamic, T> GetFlatToNestedLambda<T>(NamesMismatch namesMismatch, Node tree) where T : new()
         {
@@ -97,14 +87,14 @@ namespace NestedMapper
 
 
 
-        internal static Node GetMappingsTree<T>(object sampleSourceObject, MapperFactory.NamesMismatch namesMismatch,
-              List<Type> assumeNullWontBeMappedToThoseTypes) where T : new()
+        internal static Node GetMappingsTree<T>(object sampleSourceObject, NamesMismatch namesMismatch,
+              List<Type> assumeNullWontBeMappedToThoseTypes, List<string> ignoredFields) where T : new()
         {
-            var props = new Queue<PropertyBasicInfo>(GetPropertyBasicInfos(sampleSourceObject));
+            var props = new Queue<PropertyBasicInfo>(GetPropertyBasicInfos(sampleSourceObject).Where(x=> !ignoredFields.Contains(x.Name)));
 
-            var tree = MappingTreeBuilder.BuildTree(typeof(T), string.Empty, props, namesMismatch, assumeNullWontBeMappedToThoseTypes);
+            var tree = MappingTreeBuilder.BuildTree(typeof(T), string.Empty, props, namesMismatch, assumeNullWontBeMappedToThoseTypes, ignoredFields);
 
-            if (props.Count != 0)
+            if (props.Count!=0)
             {
                 throw new InvalidOperationException("Too many fields in the flat object, don't know what to do with " + props.Peek().Name);
             }
