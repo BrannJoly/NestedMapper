@@ -2,7 +2,7 @@ using System;
 
 namespace NestedMapper
 {
-    class PropertyBasicInfo
+    public class PropertyBasicInfo
     {
         public string Name { get;}
         public Type Type { get; }

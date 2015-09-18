@@ -22,7 +22,7 @@ namespace NestedMapperTests
 
 
         [TestMethod]
-        public void TestSimpleMappingScenario()
+        public void TestSimpleMappingScenarioWithSampleSourceObject()
         {
             var flatfoo = new FlatFoo
             {
@@ -32,6 +32,32 @@ namespace NestedMapperTests
             };
 
             Foo foo = MapperFactory.GetBidirectionalMapper<Foo>(flatfoo).ToNested(flatfoo);
+
+            Check.That(foo.I).IsEqualTo(1);
+            Check.That(foo.N.A).IsEqualTo(DateTime.Today);
+            Check.That(foo.N.B).IsEqualTo("B");
+
+        }
+
+
+        [TestMethod]
+        public void TestSimpleMappingScenarioWithProvidedProperties()
+        {
+            var props = new List<PropertyBasicInfo>
+            {
+                new PropertyBasicInfo("I", typeof (int)),
+                new PropertyBasicInfo("A", typeof (DateTime)),
+                new PropertyBasicInfo("B", typeof (string))
+            };
+
+            var flatfoo = new FlatFoo
+            {
+                I = 1,
+                A = DateTime.Today,
+                B = "B"
+            };
+            
+            Foo foo = MapperFactory.GetBidirectionalMapper<Foo>(props).ToNested(flatfoo);
 
             Check.That(foo.I).IsEqualTo(1);
             Check.That(foo.N.A).IsEqualTo(DateTime.Today);
