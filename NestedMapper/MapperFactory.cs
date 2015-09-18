@@ -20,15 +20,7 @@ namespace NestedMapper
         }
 
 
-        public static Func<dynamic,T> GetMapper<T>(object sampleSourceObject,
-            NamesMismatch namesMismatch = NamesMismatch.AllowInNestedTypesOnly,
-            IEnumerable<Type> assumeNullWontBeMappedToThoseTypes = null, IEnumerable<string> ignoredFields=null ) where T : new()
-        {
-            var bidirectionalMapper = GetBidirectionalMapper<T>(sampleSourceObject, namesMismatch, assumeNullWontBeMappedToThoseTypes, ignoredFields);
 
-            return bidirectionalMapper.ToNested;
-
-        }
 
         public static BidirectionalMapper<T> GetBidirectionalMapper<T>(object sampleSourceObject, NamesMismatch namesMismatch = NamesMismatch.AllowInNestedTypesOnly,
             IEnumerable<Type> assumeNullWontBeMappedToThoseTypes=null, IEnumerable<string> ignoredFields = null) where T : new()
@@ -49,6 +41,7 @@ namespace NestedMapper
             var nestedToFlat = NestedToFlatBuilder.UpdateDictionary<T>(tree, mappings);
 
             return new BidirectionalMapper<T>(flatToNested, nestedToFlat, mappings);
+
         }
 
 

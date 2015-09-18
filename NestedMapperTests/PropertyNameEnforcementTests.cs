@@ -33,7 +33,7 @@ namespace NestedMapperTests
             flatfoo.N2B = "N1B";
 
             Check.ThatCode(
-                () => MapperFactory.GetMapper<Foo>(flatfoo, MapperFactory.NamesMismatch.NeverAllow).Map(flatfoo))
+                () => MapperFactory.GetBidirectionalMapper<Foo>(flatfoo, MapperFactory.NamesMismatch.NeverAllow).Map(flatfoo))
                 .Throws<InvalidOperationException>();
             //.WithMessage("Name mismatch for property A");
 
@@ -51,7 +51,7 @@ namespace NestedMapperTests
 
             Check.ThatCode(
                 () =>
-                    MapperFactory.GetMapper<Foo>(flatfoo, MapperFactory.NamesMismatch.AllowInNestedTypesOnly)
+                    MapperFactory.GetBidirectionalMapper<Foo>(flatfoo, MapperFactory.NamesMismatch.AllowInNestedTypesOnly)
                         .Map(flatfoo))
                 .Throws<InvalidOperationException>();
             //.WithMessage("Name mismatch for property I");
@@ -67,7 +67,7 @@ namespace NestedMapperTests
             flatfoo.N1B = "N1B";
             flatfoo.N2A = DateTime.Today;
             flatfoo.N2B = "N2B";
-            FooMultipleNested foo = MapperFactory.GetMapper<FooMultipleNested>(flatfoo, MapperFactory.NamesMismatch.AlwaysAllow)(flatfoo);
+            FooMultipleNested foo = MapperFactory.GetBidirectionalMapper<FooMultipleNested>(flatfoo, MapperFactory.NamesMismatch.AlwaysAllow).ToNested(flatfoo);
 
             Check.That(foo.I).IsEqualTo(1);
             Check.That(foo.N1.A).IsEqualTo(DateTime.Today);
@@ -86,7 +86,7 @@ namespace NestedMapperTests
             flatfoo.N1B = "N1B";
             flatfoo.N2A = DateTime.Today;
             flatfoo.N2B = "N2B";
-            FooMultipleNested foo = MapperFactory.GetMapper<FooMultipleNested>(flatfoo, MapperFactory.NamesMismatch.AllowInNestedTypesOnly)(flatfoo);
+            FooMultipleNested foo = MapperFactory.GetBidirectionalMapper<FooMultipleNested>(flatfoo, MapperFactory.NamesMismatch.AllowInNestedTypesOnly).ToNested(flatfoo);
 
             Check.That(foo.I).IsEqualTo(1);
             Check.That(foo.N1.A).IsEqualTo(DateTime.Today);

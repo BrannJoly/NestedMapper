@@ -31,5 +31,7 @@ namespace NestedMapper
         }
 
         public List<Mapping> Mappings { get; }
+
+
     }
 }

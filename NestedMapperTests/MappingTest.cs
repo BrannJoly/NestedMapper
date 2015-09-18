@@ -31,7 +31,7 @@ namespace NestedMapperTests
                 B = "B"
             };
 
-            Foo foo = MapperFactory.GetMapper<Foo>(flatfoo)(flatfoo);
+            Foo foo = MapperFactory.GetBidirectionalMapper<Foo>(flatfoo).ToNested(flatfoo);
 
             Check.That(foo.I).IsEqualTo(1);
             Check.That(foo.N.A).IsEqualTo(DateTime.Today);
@@ -49,7 +49,7 @@ namespace NestedMapperTests
             flatfoo.B = "N1B";
 
 
-            Foo foo = MapperFactory.GetMapper<Foo>(flatfoo, MapperFactory.NamesMismatch.NeverAllow)(flatfoo);
+            Foo foo = MapperFactory.GetBidirectionalMapper<Foo>(flatfoo, MapperFactory.NamesMismatch.NeverAllow).ToNested(flatfoo);
 
             Check.That(foo.I).IsEqualTo(1);
             Check.That(foo.N.A).IsEqualTo(DateTime.Today);
@@ -83,7 +83,7 @@ namespace NestedMapperTests
             };
 
             Check.ThatCode(
-                () => MapperFactory.GetMapper<Foo>(flatfoo)(flatfoo))
+                () => MapperFactory.GetBidirectionalMapper<Foo>(flatfoo).ToNested(flatfoo))
                 .Throws<InvalidOperationException>()
                 .WithMessage("Too many fields in the flat object, don't know what to do with UnusedField");
 
@@ -107,7 +107,7 @@ namespace NestedMapperTests
             };
 
             Check.ThatCode(
-                () => MapperFactory.GetMapper<Foo>(flatfoo)(flatfoo))
+                () => MapperFactory.GetBidirectionalMapper<Foo>(flatfoo).ToNested(flatfoo))
                 .Throws<InvalidOperationException>()
                 .WithMessage(@"Not enough fields in the flat object, don't know how to set B");
 
@@ -134,7 +134,7 @@ namespace NestedMapperTests
             };
 
             Check.ThatCode(
-                () => MapperFactory.GetMapper<Foo>(flatfoo)(flatfoo))
+                () => MapperFactory.GetBidirectionalMapper<Foo>(flatfoo).ToNested(flatfoo))
                 .Throws<InvalidOperationException>()
                 .WithMessage("Type mismatch for property I, was excepting a System.Int32 and got an System.String");
 
@@ -162,8 +162,7 @@ namespace NestedMapperTests
             flatfoo.y = 200;
 
             FooPosition fooPosition =
-                MapperFactory.GetMapper<FooPosition>(flatfoo, MapperFactory.NamesMismatch.AllowInNestedTypesOnly)(
-                    flatfoo);
+                MapperFactory.GetBidirectionalMapper<FooPosition>(flatfoo, MapperFactory.NamesMismatch.AllowInNestedTypesOnly).ToNested(flatfoo);
 
             Check.That(fooPosition.Name).IsEqualTo("Foo");
             Check.That(fooPosition.Position.X).IsEqualTo(45);
@@ -180,7 +179,7 @@ namespace NestedMapperTests
             flatFooSource.A = null;
             flatFooSource.B = "N1B";
 
-            var mapper = MapperFactory.GetMapper<Foo>(flatFooSource, MapperFactory.NamesMismatch.NeverAllow,
+            var mapper = MapperFactory.GetBidirectionalMapper<Foo>(flatFooSource, MapperFactory.NamesMismatch.NeverAllow,
                 new List<Type> {typeof (NestedType)});
 
             dynamic flatFoo = new ExpandoObject();
@@ -188,7 +187,7 @@ namespace NestedMapperTests
             flatFoo.A = DateTime.Today;
             flatFoo.B = "N1B";
 
-            Foo foo = mapper(flatFoo);
+            Foo foo = mapper.ToNested(flatFoo);
 
             Check.That(foo.I).IsEqualTo(1);
             Check.That(foo.N.A).IsEqualTo(DateTime.Today);
@@ -208,10 +207,10 @@ namespace NestedMapperTests
             dynamic flatFoo = new ExpandoObject();
             flatFoo.IntProp = 1;
 
-            var mapper = MapperFactory.GetMapper<ImplicitCastTestTarget>(flatFoo,
+            var mapper = MapperFactory.GetBidirectionalMapper<ImplicitCastTestTarget>(flatFoo,
                 MapperFactory.NamesMismatch.AlwaysAllow);
 
-            ImplicitCastTestTarget foo = mapper(flatFoo);
+            ImplicitCastTestTarget foo = mapper.ToNested(flatFoo);
 
 
             Check.That(foo.TargetDecimalProp).IsEqualTo(1m);
@@ -230,9 +229,9 @@ namespace NestedMapperTests
             dynamic flatFoo = new ExpandoObject();
             flatFoo.IntProp = null;
 
-            var mapper = MapperFactory.GetMapper<NullableFoo>(flatFoo, MapperFactory.NamesMismatch.AlwaysAllow);
+            var mapper = MapperFactory.GetBidirectionalMapper<NullableFoo>(flatFoo, MapperFactory.NamesMismatch.AlwaysAllow);
 
-            NullableFoo foo = mapper(flatFoo);
+            NullableFoo foo = mapper.ToNested(flatFoo);
 
 
             Check.That(foo.I).IsNull();
@@ -245,9 +244,9 @@ namespace NestedMapperTests
             dynamic flatFoo = new ExpandoObject();
             flatFoo.IntProp = 1;
 
-            var mapper = MapperFactory.GetMapper<NullableFoo>(flatFoo, MapperFactory.NamesMismatch.AlwaysAllow);
+            var mapper = MapperFactory.GetBidirectionalMapper<NullableFoo>(flatFoo, MapperFactory.NamesMismatch.AlwaysAllow);
 
-            NullableFoo foo = mapper(flatFoo);
+            NullableFoo foo = mapper.ToNested(flatFoo);
 
 
             Check.That(foo.I).IsEqualTo(1);
