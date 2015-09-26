@@ -162,7 +162,7 @@ namespace NestedMapperTests
             Check.ThatCode(
                 () => MapperFactory.GetBidirectionalMapper<Foo>(flatfoo).ToNested(flatfoo))
                 .Throws<InvalidOperationException>()
-                .WithMessage("Type mismatch when mapping FlatA (System.String) with A (System.DateTime)");
+                .WithMessage("Type mismatch when mapping FlatA (System.String) with N.A (System.DateTime)");
 
         }
 

@@ -61,9 +61,10 @@ namespace NestedMapper
                 }
                 else if (prop.PropertyType.GetProperties(BindingFlags.Public | BindingFlags.Instance).All(x => x.GetSetMethod() == null))
                 {
+                    var path = name == null ? null : name + ".";
                     // no sense recursing on this
                     throw new InvalidOperationException(
-                        $"Type mismatch when mapping {propToMap.Name} ({propToMap.Type}) with {prop.Name} ({prop.PropertyType})");
+                        $"Type mismatch when mapping {propToMap.Name} ({propToMap.Type}) with {path}{prop.Name} ({prop.PropertyType})");
                 }
                 else
                 {
