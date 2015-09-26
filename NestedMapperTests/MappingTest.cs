@@ -143,9 +143,9 @@ namespace NestedMapperTests
 
         public class FlatFooWrongType
         {
-            public string I { get; set; }
-            public int A { get; set; }
-            public string B { get; set; }
+            public int I{ get; set; }
+            public string FlatA { get; set; }
+            public string FlatB { get; set; }
         }
 
 
@@ -154,15 +154,15 @@ namespace NestedMapperTests
         {
             var flatfoo = new FlatFooWrongType
             {
-                I = "WrongType",
-                A = 2,
-                B = "B"
+                I = 0,
+                FlatA = "WrongType",
+                FlatB = "B"
             };
 
             Check.ThatCode(
                 () => MapperFactory.GetBidirectionalMapper<Foo>(flatfoo).ToNested(flatfoo))
                 .Throws<InvalidOperationException>()
-                .WithMessage("Type mismatch for property I, was excepting a System.Int32 and got an System.String");
+                .WithMessage("Type mismatch when mapping FlatA (System.String) with A (System.DateTime)");
 
         }
 

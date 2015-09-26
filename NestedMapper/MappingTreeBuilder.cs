@@ -63,7 +63,7 @@ namespace NestedMapper
                 {
                     // no sense recursing on this
                     throw new InvalidOperationException(
-                        $"Type mismatch for property {prop.Name}, was excepting a {prop.PropertyType} and got an {propToMap.Type}");
+                        $"Type mismatch when mapping {propToMap.Name} ({propToMap.Type}) with {prop.Name} ({prop.PropertyType})");
                 }
                 else
                 {
